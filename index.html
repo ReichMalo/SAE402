@@ -1,51 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AR Room - Quest 3</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-</head>
-<body>
+  </head>
+  <body>
     <!-- A-Frame scene with AR capabilities -->
     <a-scene webxr="referenceSpaceType: local-floor;">
+      <a-box
+        position="0 1.5 -2"
+        rotation="0 45 0"
+        color="#4CC3D9"
+        scale="0.5 0.5 0.5"
+        animation="property: rotation; to: 0 405 0; loop: true; dur: 10000; easing: linear"
+      >
+      </a-box>
 
-        <a-box 
-            position="0 1.5 -2" 
-            rotation="0 45 0" 
-            color="#4CC3D9" 
-            scale="0.5 0.5 0.5"
-            animation="property: rotation; to: 0 405 0; loop: true; dur: 10000; easing: linear">
-        </a-box>
-        
-        <a-sphere 
-            position="-1 1.5 -2" 
-            radius="0.25" 
-            color="#EF2D5E">
-        </a-sphere>
-<!-- Camera and hands -->
-        <a-entity camera look-controls wasd-controls="enabled: false" position="0 1.6 0"></a-entity>
-        <a-entity id="leftHand" laser-controls="hand: left" raycaster="objects: .clickable"></a-entity>
-        <a-entity id="rightHand" laser-controls="hand: right" raycaster="objects: .clickable"></a-entity>
+      <a-sphere position="-1 1.5 -2" radius="0.25" color="#EF2D5E"> </a-sphere>
+      <!-- Camera and hands -->
+      <a-entity
+        camera
+        look-controls
+        wasd-controls="enabled: false"
+        position="0 1.6 0"
+      ></a-entity>
+      <a-entity
+        id="leftHand"
+        laser-controls="hand: left"
+        raycaster="objects: .clickable"
+      ></a-entity>
+      <a-entity
+        id="rightHand"
+        laser-controls="hand: right"
+        raycaster="objects: .clickable"
+      ></a-entity>
     </a-scene>
     <!-- AR button -->
-    <button id="ar-button" style="position: fixed; bottom: 20px; right: 20px; padding: 15px 30px; font-size: 18px; background: #4CAF50; color: white; border: none; border-radius: 8px; z-index: 1000;">AR</button>
-    
-    <script>
+    <button
+      id="ar-button"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 30px;
+        font-size: 18px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        z-index: 1000;
+      "
+    >
+      AR
+    </button>
 
-        const arButton = document.getElementById('ar-button');
-        const sceneEl = document.querySelector('a-scene');
-        
-        arButton.addEventListener('click', async () => {
-            if (!navigator.xr) return;
-            
-            const session = await navigator.xr.requestSession('immersive-ar', {
-                requiredFeatures: ['local-floor'],
-                optionalFeatures: ['hand-tracking', 'hit-test']
-            });
-            
-            sceneEl.renderer.xr.setSession(session);
+    <a
+      href="anchors-hit/index.html"
+      style="
+        background: red;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        position: fixed;
+        bottom: 60px;
+        right: 20px;
+        z-index: 1000;
+      "
+    >
+      NEW TRY</a
+    >
+
+    <script>
+      const arButton = document.getElementById("ar-button");
+      const sceneEl = document.querySelector("a-scene");
+
+      arButton.addEventListener("click", async () => {
+        if (!navigator.xr) return;
+
+        const session = await navigator.xr.requestSession("immersive-ar", {
+          requiredFeatures: ["local-floor"],
+          optionalFeatures: ["hand-tracking", "hit-test"],
         });
+
+        sceneEl.renderer.xr.setSession(session);
+      });
     </script>
-</body>
+  </body>
 </html>
