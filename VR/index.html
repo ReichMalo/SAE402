@@ -32,30 +32,30 @@
 
     <a-box id="grill" position="0.01 0.86 -1" width="0.6" height="0.05" depth="0.5" color="#222" material="" geometry=""></a-box>
 
-    <a-entity id="frying-pan" class="interactable" gltf-model="assets/pan.glb" position="-0.01942 0.947 -0.70134" scale="0.2 0.2 0.2" rotation="0 180 0" grabbable="" stackable="" item-type="pan" obb-collider="centerModel: true" sound="src: #sizzle-sound; on: start-cooking; poolSize: 5"></a-entity>
+    <a-entity id="frying-pan" class="interactable" gltf-model="assets/pan.glb" position="-0.01942 0.947 -0.70134" scale="0.2 0.2 0.2" rotation="0 180 0" stackable="" item-type="pan"  sound="src: #sizzle-sound; on: start-cooking; poolSize: 5"></a-entity>
 
-    <a-entity id="serving-plate" class="interactable" gltf-model="assets/plate.glb" position="0.95 0.89 0.42" scale="0.5 0.5 0.5" grabbable="" stackable="" item-type="plate" obb-collider="centerModel: true"  infinite-supply></a-entity>
+    <a-entity id="serving-plate" class="interactable" gltf-model="assets/plate.glb" position="0.95 0.89 0.42" scale="0.5 0.5 0.5" stackable="" item-type="plate"   infinite-supply></a-entity>
 
 
-    <a-entity class="interactable" gltf-model="assets/bun.glb" position="1.26 0.96 -1.3" scale="0.4 0.4 0.4" grabbable="" stackable="" item-type="bun" obb-collider="centerModel: true" infinite-supply></a-entity>
+    <a-entity class="interactable" gltf-model="assets/bun.glb" position="1.26 0.96 -1.3" scale="0.4 0.4 0.4" stackable="" item-type="bun"  infinite-supply></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/patty.glb" position="0.83 0.95 -1.34" grabbable="" stackable="" item-type="patty" obb-collider="centerModel: true" scale="0.8 0.8 0.8" infinite-supply></a-entity>
+    <a-entity class="interactable" gltf-model="assets/patty.glb" position="0.83 0.95 -1.34" stackable="" item-type="patty"  scale="0.8 0.8 0.8" infinite-supply></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/cheese.glb" position="1.18 0.92 -0.88" grabbable="" stackable="" item-type="cheese" obb-collider="centerModel: true" scale="0.8 0.8 1" infinite-supply></a-entity>
+    <a-entity class="interactable" gltf-model="assets/cheese.glb" position="1.18 0.92 -0.88" stackable="" item-type="cheese"  scale="0.8 0.8 1" infinite-supply></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/tomato.glb" position="0.82 0.95 -0.86" scale="0.2 0.2 0.2" grabbable="" stackable="" item-type="tomato" obb-collider="centerModel: true" infinite-supply></a-entity>
+    <a-entity class="interactable" gltf-model="assets/tomato.glb" position="0.82 0.95 -0.86" scale="0.2 0.2 0.2" stackable="" item-type="tomato"  infinite-supply></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/onion.glb" position="0.61 0.96 -0.85" scale="0.2 0.2 0.2" grabbable="" stackable="" item-type="onion" obb-collider="centerModel: true" rotation="-0.21000000000000002 0 0" infinite-supply></a-entity>
+    <a-entity class="interactable" gltf-model="assets/onion.glb" position="0.61 0.96 -0.85" scale="0.2 0.2 0.2" stackable="" item-type="onion"  rotation="-0.21000000000000002 0 0" infinite-supply></a-entity>
 
 
     <!-- Nouveaux objets interactables : ketchup, mustard, trash, spatula -->
-    <a-entity class="interactable" gltf-model="assets/ketchup.glb" id="ketchup" position="1.31 1 -0.65" scale="0.5 0.5 0.5" grabbable="" stackable="" item-type="ketchup" obb-collider="centerModel: true"></a-entity>
+    <a-entity class="interactable" gltf-model="assets/ketchup.glb" id="ketchup" position="1.31 1 -0.65" scale="0.5 0.5 0.5" stackable="" item-type="ketchup" ></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/mustard.glb" id="mustard" position="1.3 1.01 -0.55" scale="0.5 0.5 0.5" grabbable="" stackable="" item-type="mustard" obb-collider="centerModel: true"></a-entity>
+    <a-entity class="interactable" gltf-model="assets/mustard.glb" id="mustard" position="1.3 1.01 -0.55" scale="0.5 0.5 0.5" stackable="" item-type="mustard" ></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/trash.glb" id="trash" position="0.05 0.05 -0.77" scale="0.1 0.1 0.1" grabbable="" stackable="" item-type="trash" obb-collider="centerModel: true" visible="" rotation="0.06 0 0"></a-entity>
+    <a-entity class="interactable" gltf-model="assets/trash.glb" id="trash" position="0.05 0.05 -0.77" scale="0.1 0.1 0.1" stackable="" item-type="trash"  visible="" rotation="0.06 0 0"></a-entity>
 
-    <a-entity class="interactable" gltf-model="assets/spatula.glb" id="spatula" position="-0.34 0.95 -0.92" scale="0.4 0.4 0.4" rotation="0 270 0" grabbable="" stackable="" item-type="spatula" obb-collider="centerModel: true"></a-entity>
+    <a-entity class="interactable" gltf-model="assets/spatula.glb" id="spatula" position="-0.34 0.95 -0.92" scale="0.4 0.4 0.4" rotation="0 270 0" stackable="" item-type="spatula" ></a-entity>
 
 
     <a-entity id="cameraRig">
