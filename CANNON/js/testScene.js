@@ -1,6 +1,7 @@
 // Three.js + Cannon.js + WebXR Scene
 
 import * as CANNON from 'cannon-es';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 let scene, camera, renderer;
 let world;
@@ -10,6 +11,8 @@ let frameCount = 0;
 let lastFpsTime = Date.now();
 let cannonDebuggerRenderer;
 let controllerCubes = {};
+let handModel = null;
+const gltfLoader = new GLTFLoader();
 
 function init() {
   // Scene setup
@@ -45,14 +48,40 @@ function init() {
   world.gravity.set(0, -9.82, 0);
   world.defaultContactMaterial.friction = 0.3;
 
-  // Create cube with physics
-  createCube();
-
   // Create ground
   createGround();
 
-  // XR Setup
-  setupXR();
+  // Load hand model
+  gltfLoader.load('asset/hand.glb', (gltf) => {
+    const loadedModel = gltf.scene;
+    console.log('Hand model loaded');
+    
+    // Apply material
+    loadedModel.traverse((child) => {
+      if (child.isMesh) {
+        child.material = new THREE.MeshPhongMaterial({
+          color: 0xcccccc,
+          emissive: 0x444444,
+          side: THREE.DoubleSide
+        });
+      }
+    });
+    
+    // Store geometry and material for controllers
+    if (loadedModel.children[0] && loadedModel.children[0].geometry) {
+      window.handGeometry = loadedModel.children[0].geometry;
+      window.handMaterial = new THREE.MeshPhongMaterial({
+        color: 0xcccccc,
+        emissive: 0x444444,
+        side: THREE.DoubleSide
+      });
+    }
+    
+    createCube();
+    setupXR();
+  }, undefined, (error) => {
+    console.error('Error loading:', error);
+  });
 
   // Resize handler
   window.addEventListener('resize', onWindowResize);
@@ -116,13 +145,26 @@ function createGround() {
 }
 
 function createControllerCube(controller, index) {
-  // Mesh
-  const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-  const color = index === 0 ? 0xff0000 : 0x00ff00; // Rouge pour left, vert pour right
-  const material = new THREE.MeshPhongMaterial({ color: color });
-  const cubeMesh = new THREE.Mesh(geometry, material);
+  let visualMesh;
   
-  controller.add(cubeMesh);
+  // Use hand geometry if loaded, otherwise fallback to cube
+  if (window.handGeometry && window.handMaterial) {
+    visualMesh = new THREE.Mesh(window.handGeometry, window.handMaterial.clone());
+    // Mirror effect for the other hand
+    const scalez = index === 0 ? 0.003 : -0.003;
+    visualMesh.scale.set(0.003, 0.003, scalez);
+    visualMesh.rotation.x = Math.PI / 2;
+    visualMesh.rotation.y = -Math.PI / 2;
+    visualMesh.rotation.z = Math.PI / 4;
+  } else {
+    // Fallback cube
+    const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const color = index === 0 ? 0xff0000 : 0x00ff00;
+    const material = new THREE.MeshPhongMaterial({ color: color });
+    visualMesh = new THREE.Mesh(geometry, material);
+  }
+  
+  controller.add(visualMesh);
   scene.add(controller);
 
   // Physics body
@@ -136,7 +178,7 @@ function createControllerCube(controller, index) {
 
   // Stocker les références
   controllerCubes[index] = {
-    mesh: cubeMesh,
+    mesh: visualMesh,
     body: cubeBody,
     controller: controller
   };
@@ -146,20 +188,33 @@ function setupXR() {
   const xrButton = document.getElementById('xr-button');
 
   if (navigator.xr) {
-    navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-      xrButton.disabled = !supported;
-      xrButton.textContent = supported ? 'Enter VR' : 'VR not supported';
-    });
+    // Try to support both VR and AR modes
+    const checkXRSupport = async () => {
+      const vrSupported = await navigator.xr.isSessionSupported('immersive-vr');
+      const arSupported = await navigator.xr.isSessionSupported('immersive-ar');
+      
+      if (vrSupported || arSupported) {
+        xrButton.disabled = false;
+        xrButton.textContent = 'Enter XR';
+      } else {
+        xrButton.disabled = true;
+        xrButton.textContent = 'XR not supported';
+      }
+    };
+    
+    checkXRSupport();
 
     xrButton.addEventListener('click', async () => {
       try {
-        const session = await navigator.xr.requestSession('immersive-vr', {
+        // Use same parameters as working A-Frame implementation
+        const session = await navigator.xr.requestSession('immersive-ar', {
           requiredFeatures: ['local-floor'],
-          optionalFeatures: ['hand-tracking'],
+          optionalFeatures: ['hand-tracking', 'hit-test'],
         });
         renderer.xr.setSession(session);
       } catch (e) {
         console.error('Failed to start XR session:', e);
+        alert('XR is not supported on this device');
       }
     });
   } else {

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PhysX - Cube Falling</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/dist/physx.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <a-scene
+      physx="autoLoad: true; delay: 0; gravity: 0 -9.8 0; wasmUrl: https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/wasm/physx.release.wasm"
+      background="color: #222"
+      xr-mode-ui="XRMode: xr"
+    >
+      <a-assets>
+        <a-asset-item id="hand-model" src="asset/hand.glb"></a-asset-item>
+      </a-assets>
+
+      <!-- Static box (for collision test) -->
+      <a-sphere
+        position="0 1.5 -2"
+        radius="0.75"
+        color="#0F0"
+        physx-body="type: dynamic; mass: 2"
+      ></a-sphere>
+
+      <!-- Cube (dynamic - falling) -->
+      <a-box
+        id="redcube"
+        position="0 3 -2"
+        width="1"
+        height="1"
+        depth="1"
+        color="#F00"
+        physx-body="type: dynamic; mass: 1"
+        move-x
+      ></a-box>
+
+      <!-- Spheres around red cube for pushing -->
+      <a-sphere
+        position="1.2 4.5 -2"
+        radius="0.4"
+        color="#FF8"
+        physx-body="type: dynamic; mass: 0.5"
+      ></a-sphere>
+      <a-sphere
+        position="-1.2 4.5 -2"
+        radius="0.4"
+        color="#FF8"
+        physx-body="type: dynamic; mass: 0.5"
+      ></a-sphere>
+      <a-sphere
+        position="0 4.5 -0.8"
+        radius="0.4"
+        color="#FF8"
+        physx-body="type: dynamic; mass: 0.5"
+      ></a-sphere>
+      <a-sphere
+        position="0 4.5 -3.2"
+        radius="0.4"
+        color="#FF8"
+        physx-body="type: dynamic; mass: 0.5"
+      ></a-sphere>
+      <a-sphere
+        position="0.8 4.5 -1.2"
+        radius="0.35"
+        color="#FFA"
+        physx-body="type: dynamic; mass: 0.3"
+      ></a-sphere>
+
+      <!-- Camera with XR tracking -->
+      <a-camera position="0 1.6 0" look-controls wasd-controls></a-camera>
+
+      <!-- Left Hand Controller with collision box -->
+      <a-entity
+        id="leftHand"
+        oculus-touch-controls="hand: left; model: false"
+        raycaster="objects: .interactable"
+      >
+        <a-entity
+          gltf-model="#hand-model"
+          scale="0.003 0.003 -0.003"
+          rotation="230 -100 35"
+          position="0 0 0"
+        ></a-entity>
+        <a-box
+          position="0 0 0"
+          width="0.1"
+          height="0.1"
+          depth="0.1"
+          visible="false"
+          physx-body="type: kinematic"
+        ></a-box>
+      </a-entity>
+
+      <!-- Right Hand Controller with collision box -->
+      <a-entity
+        id="rightHand"
+        oculus-touch-controls="hand: right; model: false"
+        raycaster="objects: .interactable"
+      >
+        <a-entity
+          gltf-model="#hand-model"
+          scale="0.003 0.003 0.003"
+          rotation="-230 -100 35"
+          position="0 0 0"
+        ></a-entity>
+        <a-box
+          position="0 0 0"
+          width="0.1"
+          height="0.1"
+          depth="0.1"
+          visible="false"
+          physx-body="type: kinematic"
+        ></a-box>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      AFRAME.registerComponent("move-x", {
+        tick: function () {
+          const pos = this.el.getAttribute("position");
+          pos.x += 0.01;
+          this.el.setAttribute("position", pos);
+        },
+      });
+    </script>
+  </body>
+</html>

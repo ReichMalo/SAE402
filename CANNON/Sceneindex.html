@@ -47,12 +47,14 @@
       <div>Three.js + Cannon.js + WebXR</div>
       <div id="fps">FPS: 0</div>
     </div>
-    <button id="xr-button">Enter VR</button>
+    <button id="xr-button">Enter XR</button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script type="importmap">
       {
         "imports": {
+          "three": "https://esm.sh/three@r128",
+          "three/examples/jsm/loaders/GLTFLoader.js": "https://esm.sh/three@r128/examples/jsm/loaders/GLTFLoader.js",
           "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
         }
       }
