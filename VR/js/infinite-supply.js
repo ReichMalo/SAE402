@@ -11,6 +11,7 @@ AFRAME.registerComponent('infinite-supply', {
         this.originalScale = this.el.getAttribute('scale');
         this.originalModel = this.el.getAttribute('gltf-model');
         this.itemType = this.el.getAttribute('item-type');
+        this.originalPhysxBody = this.el.getAttribute('physx-body');
 
         this.originalWorldPos = new THREE.Vector3();
         if (this.el.object3D) {
@@ -29,6 +30,10 @@ AFRAME.registerComponent('infinite-supply', {
             this.el.setAttribute('position', this.originalPosition);
             this.el.setAttribute('rotation', this.originalRotation);
             this.el.setAttribute('scale', this.originalScale);
+            // Preserve physics body
+            if (this.originalPhysxBody) {
+                this.el.setAttribute('physx-body', this.originalPhysxBody);
+            }
             console.log('🔄 Original reset to starting position');
         }, this.data.delay);
     }

@@ -164,6 +164,12 @@ AFRAME.registerComponent('grab-controller', {
             z: currentScale.z
         } : null;
 
+        // Sauvegarder et désactiver la physique
+        this._savedPhysxBody = el.getAttribute('physx-body');
+        if (this._savedPhysxBody) {
+            el.removeAttribute('physx-body');
+        }
+
         this._finishGrab(el);
     },
 
@@ -286,6 +292,12 @@ AFRAME.registerComponent('grab-controller', {
             }
         }
 
+        // Restaurer la physique
+        if (this._savedPhysxBody) {
+            this.grabbedEl.setAttribute('physx-body', this._savedPhysxBody);
+            this._savedPhysxBody = null;
+        }
+
         if (this.raycaster) {
             try {
                 this.el.setAttribute('raycaster', 'enabled', true);
@@ -320,6 +332,7 @@ AFRAME.registerComponent('grab-controller', {
         const rotation = originalEl.getAttribute('rotation') || { x:0, y:0, z:0 };
         const scale = originalEl.getAttribute('scale') || { x:1, y:1, z:1 };
         const itemType = originalEl.getAttribute('item-type') || '';
+        const physxBody = originalEl.getAttribute('physx-body');
 
         const clone = document.createElement('a-entity');
         clone.classList.add('interactable');
@@ -328,6 +341,7 @@ AFRAME.registerComponent('grab-controller', {
         clone.setAttribute('rotation', rotation);
         clone.setAttribute('scale', scale);
         if (itemType) clone.setAttribute('item-type', itemType);
+        if (physxBody) clone.setAttribute('physx-body', physxBody);
         clone.setAttribute('stackable', '');
         clone.dataset.isClone = 'true';
         clone.dataset.isOriginal = 'false';
