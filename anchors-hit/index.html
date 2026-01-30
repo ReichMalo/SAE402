@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Room - Quest 3</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <a-scene
+      ar-ui
+      hit-test-cursor="cursor: #cursor; ring: #cursorRing"
+      xr-mode-ui="enterARButton: #start-ar-button; XRMode: xr;"
+      zone-tool="root: #anchor-root; cursor: #cursor; max: 4; min: 4"
+      renderer="alpha: true"
+      webxr="referenceSpaceType: local-floor; requiredFeatures: local-floor; optionalFeatures: hit-test;"
+    >
+      <a-entity
+        camera
+        look-controls
+        wasd-controls="enabled: false"
+        position="0 1.6 0"
+      >
+      </a-entity>
+
+      <!-- Controllers -->
+      <a-entity id="leftHand" laser-controls="hand: left"></a-entity>
+      <a-entity id="rightHand" laser-controls="hand: right"></a-entity>
+
+      <a-entity id="anchor-root"></a-entity>
+
+      <a-entity id="cursor" visible="false">
+        <a-ring
+          id="cursorRing"
+          color="#00FF7F"
+          radius-inner="0.03"
+          radius-outer="0.06"
+          rotation="-90 0 0"
+        ></a-ring>
+        <a-cone
+          color="#00FF7F"
+          height="0.08"
+          radius-bottom="0.02"
+          position="0 0.04 0"
+        ></a-cone>
+      </a-entity>
+    </a-scene>
+
+    <div id="overlay">
+      <button id="start-ar-button" class="ar-button">Start AR</button>
+      <button id="reset-zone-button" class="reset-button">Reset zone</button>
+      <div id="status"></div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
