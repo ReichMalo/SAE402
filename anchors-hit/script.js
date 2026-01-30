@@ -1,56 +1,3 @@
-/* -----------------------------
-   1) Hint (перед очима)
------------------------------- */
-AFRAME.registerComponent("ar-ui", {
-  init: function () {
-    this.sceneEl = this.el;
-    this.cameraEl = this.sceneEl.querySelector("[camera]");
-    this.hintEl = null;
-
-    this.onEnterVR = this.onEnterVR.bind(this);
-    this.onExitVR = this.onExitVR.bind(this);
-
-    this.sceneEl.addEventListener("enter-vr", this.onEnterVR);
-    this.sceneEl.addEventListener("exit-vr", this.onExitVR);
-  },
-
-  remove: function () {
-    this.sceneEl.removeEventListener("enter-vr", this.onEnterVR);
-    this.sceneEl.removeEventListener("exit-vr", this.onExitVR);
-  },
-
-  onEnterVR: function () {
-    if (this.sceneEl.is("ar-mode") === false) return;
-    if (this.cameraEl === null) return;
-
-    if (this.hintEl === null) {
-      var t = document.createElement("a-text");
-      t.setAttribute(
-        "value",
-        "Aim at a real surface.\nPress Trigger to pick 4 points.\nA tile will appear.",
-      );
-      t.setAttribute("color", "#FFFFFF");
-      t.setAttribute("align", "center");
-      t.setAttribute("width", "2.4");
-      t.setAttribute("position", "0 0 -1.2");
-      t.setAttribute("opacity", "0.95");
-      this.cameraEl.appendChild(t);
-      this.hintEl = t;
-    }
-
-    this.hintEl.setAttribute("visible", "true");
-  },
-
-  onExitVR: function () {
-    if (this.hintEl !== null) {
-      this.hintEl.setAttribute("visible", "false");
-    }
-  },
-});
-
-/* -----------------------------------------
-   2) Real WebXR Hit-Test -> рухаємо курсор
------------------------------------------- */
 AFRAME.registerComponent("hit-test-cursor", {
   schema: {
     cursor: { type: "selector" }, // #cursor
@@ -66,12 +13,6 @@ AFRAME.registerComponent("hit-test-cursor", {
     this.refSpace = null;
     this.viewerSpace = null;
     this.hitTestSource = null;
-
-    this.lastPose = null;
-
-    this._mat = new THREE.Matrix4();
-    this._pos = new THREE.Vector3();
-    this._quat = new THREE.Quaternion();
 
     this.onEnterVR = this.onEnterVR.bind(this);
     this.onExitVR = this.onExitVR.bind(this);
@@ -89,13 +30,8 @@ AFRAME.registerComponent("hit-test-cursor", {
   },
 
   onEnterVR: function () {
-    if (this.sceneEl.is("ar-mode") === false) return;
-
-    if (this.sceneEl.renderer === undefined) return;
-    if (this.sceneEl.renderer.xr === undefined) return;
-
     var session = this.sceneEl.renderer.xr.getSession();
-    if (session === null) return;
+    if (!session) return;
 
     this.session = session;
 
@@ -111,10 +47,7 @@ AFRAME.registerComponent("hit-test-cursor", {
           .requestHitTestSource({ space: self.viewerSpace })
           .then(function (src) {
             self.hitTestSource = src;
-            self.lastPose = null;
-
             if (self.cursorEl) self.cursorEl.setAttribute("visible", "false");
-
             session.requestAnimationFrame(self.onXRFrame);
           });
       });
@@ -122,7 +55,7 @@ AFRAME.registerComponent("hit-test-cursor", {
   },
 
   onExitVR: function () {
-    if (this.hitTestSource !== null) {
+    if (this.hitTestSource) {
       this.hitTestSource.cancel();
       this.hitTestSource = null;
     }
@@ -130,79 +63,57 @@ AFRAME.registerComponent("hit-test-cursor", {
     this.session = null;
     this.refSpace = null;
     this.viewerSpace = null;
-    this.lastPose = null;
 
     if (this.cursorEl) this.cursorEl.setAttribute("visible", "false");
   },
 
   onXRFrame: function (time, frame) {
-    var session = frame.session;
-    session.requestAnimationFrame(this.onXRFrame);
+    frame.session.requestAnimationFrame(this.onXRFrame);
 
-    if (this.hitTestSource === null) return;
-    if (this.refSpace === null) return;
-    if (this.cursorEl === null) return;
+    if (!this.hitTestSource) return;
+    if (!this.refSpace) return;
+    if (!this.cursorEl) return;
+
+    // Перевіряємо чи зона вже створена
+    var zoneTool = this.sceneEl.components["zone-tool"];
+    if (zoneTool && zoneTool.polyEl) {
+      // Зона створена - курсор не показуємо
+      this.cursorEl.setAttribute("visible", "false");
+      return;
+    }
 
     var results = frame.getHitTestResults(this.hitTestSource);
-
-    if (results.length === 0) {
+    if (!results || results.length === 0) {
       this.cursorEl.setAttribute("visible", "false");
-      this.lastPose = null;
       return;
     }
 
     var pose = results[0].getPose(this.refSpace);
-    if (pose === null) {
+    if (!pose) {
       this.cursorEl.setAttribute("visible", "false");
-      this.lastPose = null;
       return;
     }
 
-    this.lastPose = pose;
-
-    // Позиція + орієнтація курсора
-    this._mat.fromArray(pose.transform.matrix);
-    this._pos.setFromMatrixPosition(this._mat);
-    this._quat.setFromRotationMatrix(this._mat);
+    var p = pose.transform.position;
 
     this.cursorEl.setAttribute("visible", "true");
-    this.cursorEl.object3D.position.copy(this._pos);
-    this.cursorEl.object3D.quaternion.copy(this._quat);
+    this.cursorEl.object3D.position.set(p.x, p.y, p.z);
 
-    // Підлога/стіна: міняємо rotation кільця
-    this.updateRingRotation(pose);
-  },
-
-  updateRingRotation: function (pose) {
-    if (this.ringEl === null) return;
-    if (pose.transform === undefined) return;
-    if (pose.transform.orientation === undefined) return;
-
-    var o = pose.transform.orientation;
-    var q = new THREE.Quaternion(o.x, o.y, o.z, o.w);
-
-    var normal = new THREE.Vector3(0, 1, 0);
-    normal.applyQuaternion(q);
-
-    var isFloor = false;
-    if (normal.y > 0.75) isFloor = true;
-    if (normal.y < -0.75) isFloor = true;
-
-    if (isFloor) {
-      this.ringEl.setAttribute("rotation", "-90 0 0"); // горизонтально
-    } else {
-      this.ringEl.setAttribute("rotation", "0 0 0"); // вертикально
+    // Keep ring horizontal (floor)
+    if (this.ringEl) {
+      this.ringEl.setAttribute("rotation", "-90 0 0");
     }
   },
 });
 
-/* ------------------------------------------------
-   3) 4 точки + плитка (mesh) між ними
-------------------------------------------------- */
+/* -----------------------------------------
+  Zone tool: 4 points -> oriented rectangle
+------------------------------------------ */
 AFRAME.registerComponent("zone-tool", {
   schema: {
     root: { type: "selector" }, // #anchor-root
     cursor: { type: "selector" }, // #cursor
+    min: { type: "int", default: 4 },
     max: { type: "int", default: 4 },
   },
 
@@ -211,179 +122,213 @@ AFRAME.registerComponent("zone-tool", {
     this.rootEl = this.data.root;
     this.cursorEl = this.data.cursor;
 
-    this.points = [];
-    this.tileEl = null;
     this.session = null;
+
+    this.points = []; // THREE.Vector3
+    this.markers = []; // a-sphere
+    this.planeEl = null;
+
+    this.polyEl = null; // a-entity with custom mesh
 
     this.onEnterVR = this.onEnterVR.bind(this);
     this.onExitVR = this.onExitVR.bind(this);
     this.onSelect = this.onSelect.bind(this);
+    this.onSqueeze = this.onSqueeze.bind(this);
 
     this.sceneEl.addEventListener("enter-vr", this.onEnterVR);
     this.sceneEl.addEventListener("exit-vr", this.onExitVR);
+
+    // Buttons
+    this.resetBtn = document.getElementById("reset-zone-button");
+    this.finishBtn = document.getElementById("finish-zone-button");
+    this.statusEl = document.getElementById("status");
+
+    if (this.resetBtn) {
+      this.resetBtn.addEventListener("click", () => this.resetZone());
+    }
+    this.resetZone();
   },
 
   remove: function () {
     this.sceneEl.removeEventListener("enter-vr", this.onEnterVR);
     this.sceneEl.removeEventListener("exit-vr", this.onExitVR);
+
+    if (this.session) {
+      this.session.removeEventListener("select", this.onSelect);
+    }
   },
 
   onEnterVR: function () {
     if (this.sceneEl.is("ar-mode") === false) return;
-    if (this.sceneEl.renderer === undefined) return;
-    if (this.sceneEl.renderer.xr === undefined) return;
 
-    var session = this.sceneEl.renderer.xr.getSession();
-    if (session === null) return;
+    const session = this.sceneEl.renderer?.xr?.getSession();
+    if (!session) return;
 
     this.session = session;
     session.addEventListener("select", this.onSelect);
+    session.addEventListener("squeeze", this.onSqueeze);
+
+    this.setStatus("AR started. Place points with trigger.");
   },
 
   onExitVR: function () {
-    if (this.session !== null) {
+    if (this.session) {
       this.session.removeEventListener("select", this.onSelect);
+      this.session.removeEventListener("squeeze", this.onSqueeze);
     }
     this.session = null;
-    this.points = [];
-
-    if (this.tileEl !== null) {
-      this.rootEl.removeChild(this.tileEl);
-      this.tileEl = null;
-    }
+    this.resetZone();
+    this.setStatus("Exited AR.");
   },
 
   onSelect: function () {
-    if (this.cursorEl === null) return;
+    if (!this.cursorEl) return;
 
-    var v = this.cursorEl.getAttribute("visible");
-    if (v !== true && v !== "true") return;
-
-    var p = this.cursorEl.object3D.position;
-
-    if (this.points.length < this.data.max) {
-      this.points.push(new THREE.Vector3(p.x, p.y, p.z));
-      this.addMarker(p.x, p.y, p.z);
-
-      if (this.points.length === this.data.max) {
-        this.buildTile();
-      }
+    // якщо вже 4 точки — більше не додаємо
+    if (this.points.length >= this.data.max) {
+      this.setStatus(
+        `Zone already created (${this.data.max} points). Press Grip button to Reset.`,
+      );
       return;
     }
 
-    // після плитки можна розміщувати об’єкти — додамо пізніше (inside-check)
+    const p = this.cursorEl.object3D.position;
+    const v = new THREE.Vector3(p.x, p.y, p.z);
+
+    this.points.push(v);
+    this.addMarker(v);
+
+    const needed = this.data.min; // тут це 4
+
+    // якщо точок < 4 — просто підказка
+    if (this.points.length < needed) {
+      this.setStatus(
+        `Point ${this.points.length}/4 added. Place ${needed - this.points.length} more.`,
+      );
+      return;
+    }
+
+    // ✅ якщо це 4-та точка — будуємо полігон автоматично
+    this.setStatus("Point 4/4 added. Creating zone...");
+    this.buildPolygon();
   },
 
-  addMarker: function (x, y, z) {
-    var m = document.createElement("a-sphere");
+  onSqueeze: function () {
+    // Grip button - reset zone
+    this.resetZone();
+    this.setStatus("Zone reset. Place 4 new points.");
+  },
+
+  addMarker: function (v) {
+    if (!this.rootEl) return;
+
+    const m = document.createElement("a-sphere");
     m.setAttribute("radius", "0.03");
     m.setAttribute("color", "#00c8ff");
-    m.setAttribute("position", x + " " + (y + 0.01) + " " + z);
+    m.setAttribute("position", `${v.x} ${v.y + 0.01} ${v.z}`);
+
     this.rootEl.appendChild(m);
+    this.markers.push(m);
   },
 
-  buildTile: function () {
-    // points: p0 p1 p2 p3 (як користувач клікнув)
-    var p0 = this.points[0];
-    var p1 = this.points[1];
-    var p2 = this.points[2];
-    var p3 = this.points[3];
+  removeMarkers: function () {
+    if (!this.rootEl) return;
+    for (const m of this.markers) this.rootEl.removeChild(m);
+    this.markers = [];
+  },
 
-    // база площини: xAxis = (p1-p0), zAxis = (p3-p0), yAxis = нормаль
-    var xAxis = new THREE.Vector3().subVectors(p1, p0);
-    if (xAxis.length() === 0) return;
-    xAxis.normalize();
+  removePolygon: function () {
+    if (!this.rootEl) return;
+    if (!this.polyEl) return;
 
-    var zAxis = new THREE.Vector3().subVectors(p3, p0);
-    if (zAxis.length() === 0) return;
-    zAxis.normalize();
+    // remove three.js mesh safely
+    this.polyEl.removeObject3D("mesh");
+    this.rootEl.removeChild(this.polyEl);
+    this.polyEl = null;
+  },
 
-    var yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis);
-    if (yAxis.length() === 0) return;
-    yAxis.normalize();
+  hideCursor: function () {
+    if (!this.cursorEl) return;
+    this.cursorEl.setAttribute("visible", "false");
+  },
 
-    // зробимо zAxis перпендикулярною (щоб не було перекосу)
-    zAxis = new THREE.Vector3().crossVectors(xAxis, yAxis);
-    zAxis.normalize();
+  showCursor: function () {
+    if (!this.cursorEl) return;
+    this.cursorEl.setAttribute("visible", "true");
+  },
 
-    // локальні координати (u,v) для кожної точки
-    var u0 = 0,
-      v0 = 0;
+  resetZone: function () {
+    this.points = [];
+    this.removeMarkers();
+    this.removePolygon();
+    this.showCursor();
+    this.setStatus("Reset. Tap to place new points.");
+  },
 
-    var d1 = new THREE.Vector3().subVectors(p1, p0);
-    var u1 = d1.dot(xAxis);
-    var v1 = d1.dot(zAxis);
+  buildPolygon: function () {
+    if (!this.rootEl) return;
+    if (this.points.length !== 4) {
+      this.setStatus(`Need exactly 4 points. Currently: ${this.points.length}`);
+      return;
+    }
 
-    var d2 = new THREE.Vector3().subVectors(p2, p0);
-    var u2 = d2.dot(xAxis);
-    var v2 = d2.dot(zAxis);
+    // Replace old polygon if exists
+    this.removePolygon();
 
-    var d3 = new THREE.Vector3().subVectors(p3, p0);
-    var u3 = d3.dot(xAxis);
-    var v3 = d3.dot(zAxis);
+    // Create manual geometry for quadrilateral
+    const geom = new THREE.BufferGeometry();
 
-    // геометрія: 2 трикутники (0-1-2) і (0-2-3)
-    var positions = new Float32Array([
-      u0,
-      0,
-      v0,
-      u1,
-      0,
-      v1,
-      u2,
-      0,
-      v2,
+    // 4 точки -> 2 трикутники (0-1-2, 0-2-3)
+    const vertices = new Float32Array([
+      // Трикутник 1: точки 0, 1, 2
+      this.points[0].x,
+      this.points[0].y,
+      this.points[0].z,
+      this.points[1].x,
+      this.points[1].y,
+      this.points[1].z,
+      this.points[2].x,
+      this.points[2].y,
+      this.points[2].z,
 
-      u0,
-      0,
-      v0,
-      u2,
-      0,
-      v2,
-      u3,
-      0,
-      v3,
+      // Трикутник 2: точки 0, 2, 3
+      this.points[0].x,
+      this.points[0].y,
+      this.points[0].z,
+      this.points[2].x,
+      this.points[2].y,
+      this.points[2].z,
+      this.points[3].x,
+      this.points[3].y,
+      this.points[3].z,
     ]);
 
-    var geom = new THREE.BufferGeometry();
-    geom.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geom.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
     geom.computeVertexNormals();
 
-    var mat = new THREE.MeshStandardMaterial({
-      color: 0xff0000,
+    // Material (напівпрозора сіра)
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x808080,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.8,
       side: THREE.DoubleSide,
     });
 
-    var mesh = new THREE.Mesh(geom, mat);
+    const mesh = new THREE.Mesh(geom, mat);
 
-    // entity для плитки
-    var tile = document.createElement("a-entity");
+    const e = document.createElement("a-entity");
+    e.setObject3D("mesh", mesh);
 
-    // позиція = p0, орієнтація = матриця з осей
-    var m = new THREE.Matrix4();
-    m.makeBasis(xAxis, yAxis, zAxis);
+    this.rootEl.appendChild(e);
+    this.polyEl = e;
 
-    tile.object3D.position.copy(p0);
-    tile.object3D.setRotationFromMatrix(m);
-    tile.object3D.add(mesh);
+    // Приховуємо курсор після створення зони
+    this.hideCursor();
 
-    // просте світло, щоб матеріал був видимий
-    var light = this.sceneEl.querySelector("#zoneLight");
-    if (light === null) {
-      var l = document.createElement("a-entity");
-      l.setAttribute("id", "zoneLight");
-      l.setAttribute("light", "type: directional; intensity: 1");
-      l.setAttribute("position", "0 4 0");
-      this.sceneEl.appendChild(l);
+    this.setStatus(`Zone created with 4 points. Press Grip to reset zone.`);
+  },
 
-      var amb = document.createElement("a-entity");
-      amb.setAttribute("light", "type: ambient; intensity: 0.6");
-      this.sceneEl.appendChild(amb);
-    }
-
-    this.rootEl.appendChild(tile);
-    this.tileEl = tile;
+  setStatus: function (msg) {
+    if (this.statusEl) this.statusEl.textContent = msg;
   },
 });
