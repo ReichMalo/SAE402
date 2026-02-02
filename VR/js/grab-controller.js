@@ -4,6 +4,8 @@ AFRAME.registerComponent('grab-controller', {
         this.isLocked = false;
         this._savedScale = null;
         this._lastPointer = { x: null, y: null };
+        this._lastTriggerTime = 0;
+        this._triggerDelay = 100; // Délai minimum entre deux grabs (ms)
 
         this.raycaster = this.el.components && this.el.components.raycaster;
         this.usingCursor = !!(this.el.components && this.el.components.cursor);
@@ -13,11 +15,13 @@ AFRAME.registerComponent('grab-controller', {
         this._onPointerDownBound = this._onPointerDown.bind(this);
         this._onPointerUpBound = this._onPointerUp.bind(this);
 
+        // Utiliser uniquement les événements VR pertinents
         this.el.addEventListener('triggerdown', this._onTriggerBound);
-        this.el.addEventListener('triggertouchstart', this._onTriggerBound);
         this.el.addEventListener('gripdown', this._onTriggerBound);
-        this.el.addEventListener('mousedown', this._onTriggerBound);
-        window.addEventListener('pointerdown', this._onPointerDownBound);
+        
+        // Événements de relâchement
+        this.el.addEventListener('triggerup', this._onTriggerUpBound);
+        this.el.addEventListener('gripup', this._onTriggerUpBound);
     },
 
     tick: function() {
@@ -28,22 +32,27 @@ AFRAME.registerComponent('grab-controller', {
         this.el.object3D.getWorldPosition(controllerPos);
         this.el.object3D.getWorldQuaternion(controllerQuat);
 
-        const forward = new THREE.Vector3(0, 0, this.usingCursor ? -0.5 : -0.3);
-        forward.applyQuaternion(controllerQuat);
-        controllerPos.add(forward);
-
+        // Position suit la main
         this.grabbedEl.object3D.position.copy(controllerPos);
+
+        // Rotation : appliquer le delta de rotation de la main à la rotation initiale
+        if (this._handRotationAtGrab && this._savedRotationQuat) {
+            // Calculer la différence de rotation : rotation actuelle / rotation initiale
+            const rotationDelta = new THREE.Quaternion();
+            rotationDelta.copy(controllerQuat).multiply(this._handRotationAtGrab.clone().invert());
+
+            // Appliquer le delta à la rotation initiale
+            const finalQuat = new THREE.Quaternion();
+            finalQuat.copy(this._savedRotationQuat).multiply(rotationDelta);
+
+            this.grabbedEl.object3D.quaternion.copy(finalQuat);
+        }
     },
 
     remove: function () {
         this.el.removeEventListener('triggerdown', this._onTriggerBound);
-        this.el.removeEventListener('triggertouchstart', this._onTriggerBound);
         this.el.removeEventListener('gripdown', this._onTriggerBound);
-        this.el.removeEventListener('mousedown', this._onTriggerBound);
-        window.removeEventListener('pointerdown', this._onPointerDownBound);
-        window.removeEventListener('pointerup', this._onPointerUpBound);
         this.el.removeEventListener('triggerup', this._onTriggerUpBound);
-        this.el.removeEventListener('triggertouchend', this._onTriggerUpBound);
         this.el.removeEventListener('gripup', this._onTriggerUpBound);
     },
 
@@ -58,7 +67,13 @@ AFRAME.registerComponent('grab-controller', {
     },
 
     _onTrigger: function(evt) {
-        if (this.isLocked) return;
+        const now = Date.now();
+        // Vérifier que suffisamment de temps s'est écoulé depuis le dernier trigger
+        if (now - this._lastTriggerTime < this._triggerDelay) {
+            return;
+        }
+        this._lastTriggerTime = now;
+
         if (this.grabbedEl) {
             this.drop();
             return;
@@ -66,21 +81,40 @@ AFRAME.registerComponent('grab-controller', {
 
         let targetEl = null;
 
-        if (this.raycaster && this.raycaster.intersectedEls) {
-            targetEl = this.raycaster.intersectedEls.find(el =>
-                el.classList && el.classList.contains('interactable')
-            );
+        // Détection de proximité : trouver l'objet le plus proche du centre de la manette
+        const controllerPos = new THREE.Vector3();
+        if (this.el.object3D) {
+            this.el.object3D.getWorldPosition(controllerPos);
         }
 
-        if (!targetEl && evt.detail && evt.detail.intersectedEl &&
-            evt.detail.intersectedEl.classList &&
-            evt.detail.intersectedEl.classList.contains('interactable')) {
-            targetEl = evt.detail.intersectedEl;
-        }
+        const sceneEl = document.querySelector('a-scene');
+        const interactables = sceneEl.querySelectorAll('.interactable');
+        let closestEl = null;
+        let closestDist = 0.3; // Distance max de détection (30cm)
 
-        if (!targetEl && evt.target && evt.target.classList &&
-            evt.target.classList.contains('interactable')) {
-            targetEl = evt.target;
+        interactables.forEach(el => {
+            if (!el.object3D) return;
+            
+            const elPos = new THREE.Vector3();
+            el.object3D.getWorldPosition(elPos);
+            const dist = controllerPos.distanceTo(elPos);
+
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestEl = el;
+            }
+        });
+
+        // Si on trouve un objet proche, on le saisit
+        if (closestEl) {
+            targetEl = closestEl;
+        } else {
+            // Fallback: utiliser le raycaster si aucun objet n'est assez proche
+            if (this.raycaster && this.raycaster.intersectedEls) {
+                targetEl = this.raycaster.intersectedEls.find(el =>
+                    el.classList && el.classList.contains('interactable')
+                );
+            }
         }
 
         if (!targetEl) return;
@@ -164,10 +198,25 @@ AFRAME.registerComponent('grab-controller', {
             z: currentScale.z
         } : null;
 
-        // Sauvegarder et désactiver la physique
-        this._savedPhysxBody = el.getAttribute('physx-body');
-        if (this._savedPhysxBody) {
-            el.removeAttribute('physx-body');
+        // Sauvegarder la rotation initiale de l'objet
+        const currentRotation = el.getAttribute('rotation');
+        if (currentRotation) {
+            this._savedRotation = { ...currentRotation };
+            // Convertir en quaternion pour les calculs
+            this._savedRotationQuat = new THREE.Quaternion();
+            const euler = new THREE.Euler(
+                THREE.MathUtils.degToRad(currentRotation.x || 0),
+                THREE.MathUtils.degToRad(currentRotation.y || 0),
+                THREE.MathUtils.degToRad(currentRotation.z || 0),
+                'YXZ'
+            );
+            this._savedRotationQuat.setFromEuler(euler);
+        }
+
+        // Sauvegarder la rotation initiale de la main
+        if (this.el.object3D) {
+            this._handRotationAtGrab = new THREE.Quaternion();
+            this.el.object3D.getWorldQuaternion(this._handRotationAtGrab);
         }
 
         this._finishGrab(el);
@@ -292,11 +341,10 @@ AFRAME.registerComponent('grab-controller', {
             }
         }
 
-        // Restaurer la physique
-        if (this._savedPhysxBody) {
-            this.grabbedEl.setAttribute('physx-body', this._savedPhysxBody);
-            this._savedPhysxBody = null;
-        }
+        // Nettoyer les données de grip
+        this._savedRotation = null;
+        this._savedRotationQuat = null;
+        this._handRotationAtGrab = null;
 
         if (this.raycaster) {
             try {
