@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>XR Burger Workshop</title>
+    <link rel="stylesheet" href="./public/styles.css" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@d5f3f8/dist/aframe-extras.min.js"></script>
     <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>
@@ -11,8 +12,19 @@
     <script src="js/main.js"></script>
   </head>
   <body>
+    <section id="menu">
+      <h1 class="title">Meal Maker XR</h1>
+      <p class="desc">
+        Ready to create delicious burgers in AR? Let's get started!
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center">
+        <button id="btn-ar" class="btn">Start game</button>
+      </div>
+    </section>
+
     <a-scene
-      xr-mode-ui="XRMode: xr"
+      webxr="requiredFeatures: local-floor; optionalFeatures: hit-test"
+      xr-mode-ui="enabled: false"
       inspector=""
       keyboard-shortcuts=""
       screenshot=""
@@ -20,41 +32,64 @@
       physx="autoLoad: true; delay: 0; gravity: 0 -9.8 0; wasmUrl: https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/wasm/physx.release.wasm"
     >
       <a-assets>
-        <a-asset-item id="model-table" src="assets/Table.glb"></a-asset-item>
-        <a-asset-item id="model-patty" src="assets/patty.glb"></a-asset-item>
+        <a-asset-item
+          id="model-table"
+          src="./public/assets/Table.glb"
+        ></a-asset-item>
+        <a-asset-item
+          id="model-patty"
+          src="./public/assets/patty.glb"
+        ></a-asset-item>
         <a-asset-item
           id="model-bun-bottom"
-          src="assets/bunTop.glb"
+          src="./public/assets/bunTop.glb"
         ></a-asset-item>
         <a-asset-item
           id="model-bun-top"
-          src="assets/bunBottom.glb"
+          src="./public/assets/bunBottom.glb"
         ></a-asset-item>
-        <a-asset-item id="model-cheese" src="assets/cheese.glb"></a-asset-item>
-        <a-asset-item id="model-tomato" src="assets/tomato.glb"></a-asset-item>
-        <a-asset-item id="model-onion" src="assets/onion.glb"></a-asset-item>
-        <a-asset-item id="model-pan" src="assets/Pan.glb"></a-asset-item>
-        <a-asset-item id="model-plate" src="assets/Plate.glb"></a-asset-item>
+        <a-asset-item
+          id="model-cheese"
+          src="./public/assets/cheese.glb"
+        ></a-asset-item>
+        <a-asset-item
+          id="model-tomato"
+          src="./public/assets/tomato.glb"
+        ></a-asset-item>
+        <a-asset-item
+          id="model-onion"
+          src="./public/assets/onion.glb"
+        ></a-asset-item>
+        <a-asset-item
+          id="model-pan"
+          src="./public/assets/Pan.glb"
+        ></a-asset-item>
+        <a-asset-item
+          id="model-plate"
+          src="./public/assets/Plate.glb"
+        ></a-asset-item>
         <a-asset-item
           id="model-ketchup"
-          src="assets/ketchup.glb"
+          src="./public/assets/ketchup.glb"
         ></a-asset-item>
         <a-asset-item
           id="model-mustard"
-          src="assets/mustard.glb"
+          src="./public/assets/mustard.glb"
         ></a-asset-item>
-        <a-asset-item id="model-trash" src="assets/trash.glb"></a-asset-item>
+        <a-asset-item
+          id="model-trash"
+          src="./public/assets/trash.glb"
+        ></a-asset-item>
         <a-asset-item
           id="model-spatula"
-          src="assets/spatula.glb"
+          src="./public/assets/spatula.glb"
         ></a-asset-item>
-        <a-asset-item id="hand-model" src="assets/hand.glb"></a-asset-item>
         <a-asset-item
-          id="hand-close-model"
-          src="assets/handClose.glb"
+          id="hand-model"
+          src="./public/assets/hand.glb"
         ></a-asset-item>
 
-        <audio id="sizzle-sound" src="assets/sizzle.mp3"></audio>
+        <audio id="sizzle-sound" src="./public/assets/sizzle.mp3"></audio>
       </a-assets>
 
       <a-box
@@ -113,20 +148,20 @@
       <a-entity
         id="frying-pan"
         class="interactable"
-        gltf-model="assets/pan.glb"
+        gltf-model="./public/assets/pan.glb"
         position="-0.01942 0.947 -0.70134"
         scale="0.2 0.2 0.2"
         rotation="0 180 0"
         stackable=""
         item-type="pan"
-        sound="src: assets/sizzle.mp3; on: start-cooking; poolSize: 5"
+        sound="src: ./public/assets/sizzle.mp3; on: start-cooking; poolSize: 5"
         physx-body="type: dynamic; mass: 0.5"
       ></a-entity>
 
       <a-entity
         id="serving-plate"
         class="interactable"
-        gltf-model="assets/plate.glb"
+        gltf-model="./public/assets/plate.glb"
         position="0.95 0.89 0.42"
         scale="0.4 0.4 0.4"
         stackable=""
@@ -139,7 +174,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/bunTop.glb"
+        gltf-model="./public/assets/bunTop.glb"
         position="0.88 0.86 -1.15"
         scale="0.3 0.3 0.3"
         stackable=""
@@ -154,21 +189,19 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/bunBottom.glb"
+        gltf-model="./public/assets/bunBottom.glb"
         position="1.19 0.86 -1.15"
         scale="0.3 0.3 0.3"
         stackable=""
         item-type="bun"
         infinite-supply=""
         data-is-original="true"
-        data-physx-mass="0.2"
-        rotation=""
-        physx-body="type: static"
+        physx-body="type: dynamic; mass: 0.2"
       ></a-entity>
 
       <a-entity
         class="interactable"
-        gltf-model="assets/patty.glb"
+        gltf-model="./public/assets/patty.glb"
         position="0.88 0.85 -0.75"
         stackable=""
         item-type="patty"
@@ -181,7 +214,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/cheese.glb"
+        gltf-model="./public/assets/cheese.glb"
         position="1.29456 0.85 -0.29922"
         stackable=""
         item-type="cheese"
@@ -194,7 +227,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/tomato.glb"
+        gltf-model="./public/assets/tomato.glb"
         position="1.16678 0.85 -0.5527"
         scale="0.15 0.15 0.15"
         stackable=""
@@ -207,7 +240,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/onion.glb"
+        gltf-model="./public/assets/onion.glb"
         position="1.23 0.85 -0.85799"
         scale="0.25 0.25 0.25"
         stackable=""
@@ -221,7 +254,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/ketchup.glb"
+        gltf-model="./public/assets/ketchup.glb"
         id="ketchup"
         position="1.25 0.85 0.08"
         scale="0.5 0.5 0.5"
@@ -232,7 +265,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/mustard.glb"
+        gltf-model="./public/assets/mustard.glb"
         id="mustard"
         position="1.25 0.85 -0.05"
         scale="0.5 0.5 0.5"
@@ -242,7 +275,7 @@
       ></a-entity>
 
       <a-entity
-        gltf-model="assets/trash.glb"
+        gltf-model="./public/assets/trash.glb"
         id="trash"
         position="1.00147 0.6 1.26816"
         scale="0.1 0.1 0.1"
@@ -267,7 +300,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="assets/spatula.glb"
+        gltf-model="./public/assets/spatula.glb"
         id="spatula"
         position="-0.42 0.95 -0.92"
         scale="0.4 0.4 0.4"
@@ -342,13 +375,44 @@
           ></a-box>
         </a-entity>
       </a-entity>
-      <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
-      <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
-      <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
-      <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
-      <div class="a-loader-title" style="display: none">
-        XR Burger Workshop
-      </div></a-scene
-    >
+    </a-scene>
+    <script>
+      const menu = document.getElementById("menu");
+      const sceneEl = document.querySelector("a-scene");
+      const btn = document.getElementById("btn-ar");
+
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+
+      let sceneReady = false;
+
+      sceneEl.addEventListener("loaded", () => {
+        sceneReady = true;
+        btn.disabled = false;
+        btn.textContent = "Start AR";
+      });
+
+      btn.addEventListener("click", () => {
+        if (!sceneReady) return;
+        if (typeof sceneEl.enterAR !== "function") return;
+
+        const result = sceneEl.enterAR();
+        if (result && typeof result.catch === "function") {
+          result.catch(() => {
+            menu.style.display = "";
+          });
+        }
+      });
+
+      sceneEl.addEventListener("enter-vr", () => {
+        if (sceneEl.is("ar-mode")) {
+          menu.style.display = "none";
+        }
+      });
+
+      sceneEl.addEventListener("exit-vr", () => {
+        menu.style.display = "";
+      });
+    </script>
   </body>
 </html>
