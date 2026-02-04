@@ -24,11 +24,11 @@
     <a-asset-item id="model-patty" src="assets/patty.glb"></a-asset-item>
     <a-asset-item
             id="model-bun-bottom"
-            src="assets/bunTop.glb"
+            src="assets/bunBottom.glb"
     ></a-asset-item>
     <a-asset-item
             id="model-bun-top"
-            src="assets/bunBottom.glb"
+            src="assets/bunTop.glb"
     ></a-asset-item>
     <a-asset-item id="model-cheese" src="assets/cheese.glb"></a-asset-item>
     <a-asset-item id="model-tomato" src="assets/tomato.glb"></a-asset-item>
@@ -111,7 +111,7 @@
   <a-entity
           id="frying-pan"
           class="interactable"
-          gltf-model="assets/pan.glb"
+          gltf-model="#model-pan"
           position="-0.01942 0.947 -0.70134"
           scale="0.2 0.2 0.2"
           rotation="0 180 0"
@@ -124,7 +124,7 @@
   <a-entity
           id="serving-plate"
           class="interactable"
-          gltf-model="assets/plate.glb"
+          gltf-model="#model-plate"
           position="0.95 0.89 0.42"
           scale="0.4 0.4 0.4"
           stackable=""
@@ -135,8 +135,9 @@
   ></a-entity>
 
   <a-entity
+          id="bun-top"
           class="interactable"
-          gltf-model="assets/bunTop.glb"
+          gltf-model="#model-bun-top"
           position="0.88 0.86 -1.15"
           scale="0.3 0.3 0.3"
           stackable=""
@@ -149,8 +150,9 @@
   ></a-entity>
 
   <a-entity
+          id="bun-bottom"
           class="interactable"
-          gltf-model="assets/bunBottom.glb"
+          gltf-model="#model-bun-bottom"
           position="1.19 0.86 -1.15"
           scale="0.3 0.3 0.3"
           stackable=""
@@ -162,8 +164,9 @@
   ></a-entity>
 
   <a-entity
+          id="patty"
           class="interactable"
-          gltf-model="assets/patty.glb"
+          gltf-model="#model-patty"
           position="0.88 0.85 -0.75"
           stackable=""
           item-type="patty"
@@ -174,8 +177,9 @@
   ></a-entity>
 
   <a-entity
+          id="cheese"
           class="interactable"
-          gltf-model="assets/cheese.glb"
+          gltf-model="#model-cheese"
           position="1.29456 0.85 -0.29922"
           stackable=""
           item-type="cheese"
@@ -186,8 +190,9 @@
   ></a-entity>
 
   <a-entity
+          id="tomato"
           class="interactable"
-          gltf-model="assets/tomato.glb"
+          gltf-model="#model-tomato"
           position="1.16678 0.85 -0.5527"
           scale="0.15 0.15 0.15"
           stackable=""
@@ -198,8 +203,9 @@
   ></a-entity>
 
   <a-entity
+          id="onion"
           class="interactable"
-          gltf-model="assets/onion.glb"
+          gltf-model="#model-onion"
           position="1.23 0.85 -0.85799"
           scale="0.25 0.25 0.25"
           stackable=""
@@ -212,7 +218,7 @@
 
   <a-entity
           class="interactable"
-          gltf-model="assets/ketchup.glb"
+          gltf-model="#model-ketchup"
           id="ketchup"
           position="1.25 0.85 0.08"
           scale="0.5 0.5 0.5"
@@ -223,7 +229,7 @@
 
   <a-entity
           class="interactable"
-          gltf-model="assets/mustard.glb"
+          gltf-model="#model-mustard"
           id="mustard"
           position="1.25 0.85 -0.05"
           scale="0.5 0.5 0.5"
@@ -233,7 +239,7 @@
   ></a-entity>
 
   <a-entity
-          gltf-model="assets/trash.glb"
+          gltf-model="#model-trash"
           id="trash"
           position="1.00147 0.6 1.26816"
           scale="0.1 0.1 0.1"
@@ -258,7 +264,7 @@
 
   <a-entity
           class="interactable"
-          gltf-model="assets/spatula.glb"
+          gltf-model="#model-spatula"
           id="spatula"
           position="-0.42 0.95 -0.92"
           scale="0.4 0.4 0.4"
