@@ -5,7 +5,7 @@ AFRAME.registerComponent('grab-controller', {
         this._savedScale = null;
         this._lastPointer = { x: null, y: null };
         this._lastTriggerTime = 0;
-        this._triggerDelay = 100; // Délai minimum entre deux grabs (ms)
+        this._triggerDelay = 100;
 
         this.raycaster = this.el.components && this.el.components.raycaster;
         this.usingCursor = !!(this.el.components && this.el.components.cursor);
@@ -15,11 +15,9 @@ AFRAME.registerComponent('grab-controller', {
         this._onPointerDownBound = this._onPointerDown.bind(this);
         this._onPointerUpBound = this._onPointerUp.bind(this);
 
-        // Utiliser uniquement les événements VR pertinents
         this.el.addEventListener('triggerdown', this._onTriggerBound);
         this.el.addEventListener('gripdown', this._onTriggerBound);
-        
-        // Événements de relâchement
+
         this.el.addEventListener('triggerup', this._onTriggerUpBound);
         this.el.addEventListener('gripup', this._onTriggerUpBound);
     },
@@ -32,16 +30,11 @@ AFRAME.registerComponent('grab-controller', {
         this.el.object3D.getWorldPosition(controllerPos);
         this.el.object3D.getWorldQuaternion(controllerQuat);
 
-        // Position suit la main
         this.grabbedEl.object3D.position.copy(controllerPos);
 
-        // Rotation : appliquer le delta de rotation de la main à la rotation initiale
         if (this._handRotationAtGrab && this._savedRotationQuat) {
-            // Calculer la différence de rotation : rotation actuelle / rotation initiale
             const rotationDelta = new THREE.Quaternion();
             rotationDelta.copy(controllerQuat).multiply(this._handRotationAtGrab.clone().invert());
-
-            // Appliquer le delta à la rotation initiale
             const finalQuat = new THREE.Quaternion();
             finalQuat.copy(this._savedRotationQuat).multiply(rotationDelta);
 
@@ -68,7 +61,6 @@ AFRAME.registerComponent('grab-controller', {
 
     _onTrigger: function(evt) {
         const now = Date.now();
-        // Vérifier que suffisamment de temps s'est écoulé depuis le dernier trigger
         if (now - this._lastTriggerTime < this._triggerDelay) {
             return;
         }
@@ -81,7 +73,6 @@ AFRAME.registerComponent('grab-controller', {
 
         let targetEl = null;
 
-        // Détection de proximité : trouver l'objet le plus proche du centre de la manette
         const controllerPos = new THREE.Vector3();
         if (this.el.object3D) {
             this.el.object3D.getWorldPosition(controllerPos);
@@ -90,7 +81,7 @@ AFRAME.registerComponent('grab-controller', {
         const sceneEl = document.querySelector('a-scene');
         const interactables = sceneEl.querySelectorAll('.interactable');
         let closestEl = null;
-        let closestDist = 0.3; // Distance max de détection (30cm)
+        let closestDist = 0.3;
 
         interactables.forEach(el => {
             if (!el.object3D) return;
@@ -105,11 +96,9 @@ AFRAME.registerComponent('grab-controller', {
             }
         });
 
-        // Si on trouve un objet proche, on le saisit
         if (closestEl) {
             targetEl = closestEl;
         } else {
-            // Fallback: utiliser le raycaster si aucun objet n'est assez proche
             if (this.raycaster && this.raycaster.intersectedEls) {
                 targetEl = this.raycaster.intersectedEls.find(el =>
                     el.classList && el.classList.contains('interactable')
@@ -120,8 +109,6 @@ AFRAME.registerComponent('grab-controller', {
         if (!targetEl) return;
 
         this.lockInputs(100);
-
-        // Cloner si c'est un original, sinon saisir directement
         if (targetEl.dataset.isOriginal === 'true') {
             this._createCloneAndGrab(targetEl);
         } else {

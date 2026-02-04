@@ -13,8 +13,10 @@ async function initializeApp() {
         await Promise.all([
             loadScript('js/grab-controller.js'),
             loadScript('js/infinite-supply.js'),
-            loadScript('js/trash-bin.js')
+            loadScript('js/trash-bin.js'),
+            loadScript('js/game-manager.js')
         ]);
+        console.log("Application fully initialized with Game Manager.");
     } catch (error) {
         console.error('Error loading components:', error);
     }
@@ -25,4 +27,3 @@ if (document.readyState === 'loading') {
 } else {
     initializeApp();
 }
-
