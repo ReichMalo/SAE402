@@ -49,6 +49,10 @@
           src="assets/spatula.glb"
         ></a-asset-item>
         <a-asset-item id="hand-model" src="assets/hand.glb"></a-asset-item>
+        <a-asset-item
+          id="hand-close-model"
+          src="assets/handClose.glb"
+        ></a-asset-item>
 
         <audio id="sizzle-sound" src="assets/sizzle.mp3"></audio>
       </a-assets>
@@ -291,6 +295,7 @@
           line="end: 0 0 -1000; color: white"
         >
           <a-entity
+            id="leftHandModel"
             gltf-model="#hand-model"
             scale="0.003 0.003 -0.003"
             rotation="230 -100 35"
@@ -315,6 +320,7 @@
           line="end: 0 0 -1000; color: white"
         >
           <a-entity
+            id="rightHandModel"
             gltf-model="#hand-model"
             scale="0.003 0.003 0.003"
             rotation="-230 -100 35"
