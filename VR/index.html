@@ -23,7 +23,6 @@
     </section>
 
     <a-scene
-      webxr="requiredFeatures: local-floor; optionalFeatures: hit-test"
       xr-mode-ui="enabled: false"
       inspector=""
       keyboard-shortcuts=""
@@ -389,25 +388,56 @@
       sceneEl.addEventListener("loaded", () => {
         sceneReady = true;
         btn.disabled = false;
-        btn.textContent = "Start AR";
+        btn.textContent = "Start XR";
       });
 
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         if (!sceneReady) return;
-        if (typeof sceneEl.enterAR !== "function") return;
 
-        const result = sceneEl.enterAR();
-        if (result && typeof result.catch === "function") {
-          result.catch(() => {
-            menu.style.display = "";
-          });
+        // Vérifier d'abord AR, puis fallback sur VR
+        let arSupported = false;
+        let vrSupported = false;
+
+        if (navigator.xr) {
+          try {
+            arSupported = await navigator.xr.isSessionSupported("immersive-ar");
+          } catch (e) {
+            console.warn("AR check failed:", e);
+          }
+          try {
+            vrSupported = await navigator.xr.isSessionSupported("immersive-vr");
+          } catch (e) {
+            console.warn("VR check failed:", e);
+          }
+        }
+
+        // Priorité: AR > VR
+        if (arSupported && typeof sceneEl.enterAR === "function") {
+          try {
+            await sceneEl.enterAR();
+            menu.style.display = "none";
+          } catch (error) {
+            console.warn("Failed to enter AR mode, trying VR:", error);
+            // Fallback sur VR
+            if (vrSupported && typeof sceneEl.enterVR === "function") {
+              await sceneEl.enterVR();
+              menu.style.display = "none";
+            }
+          }
+        } else if (vrSupported && typeof sceneEl.enterVR === "function") {
+          try {
+            await sceneEl.enterVR();
+            menu.style.display = "none";
+          } catch (error) {
+            console.error("Failed to enter VR mode:", error);
+          }
+        } else {
+          console.error("No XR mode available");
         }
       });
 
       sceneEl.addEventListener("enter-vr", () => {
-        if (sceneEl.is("ar-mode")) {
-          menu.style.display = "none";
-        }
+        menu.style.display = "none";
       });
 
       sceneEl.addEventListener("exit-vr", () => {

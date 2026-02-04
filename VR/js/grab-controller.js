@@ -258,7 +258,7 @@ AFRAME.registerComponent('grab-controller', {
         // Changer le modèle de main vers la main fermée
         const handModelEl = this.el.querySelector('[gltf-model]');
         if (handModelEl) {
-            handModelEl.setAttribute('gltf-model', 'assets/handClose.glb');
+            handModelEl.setAttribute('gltf-model', './public/assets/handClose.glb');
         }
 
         this._finishGrab(el);
@@ -409,7 +409,7 @@ AFRAME.registerComponent('grab-controller', {
         // Remettre le modèle de main ouverte
         const handModelEl = this.el.querySelector('[gltf-model]');
         if (handModelEl) {
-            handModelEl.setAttribute('gltf-model', 'assets/hand.glb');
+            handModelEl.setAttribute('gltf-model', './public/assets/hand.glb');
         }
 
         // Retirer le marqueur de saisie
