@@ -5,7 +5,7 @@ AFRAME.registerComponent('grab-controller', {
         this._savedScale = null;
         this._lastPointer = { x: null, y: null };
         this._lastTriggerTime = 0;
-        this._triggerDelay = 100; // Délai minimum entre deux grabs (ms)
+        this._triggerDelay = 100;
 
         this.raycaster = this.el.components && this.el.components.raycaster;
         this.usingCursor = !!(this.el.components && this.el.components.cursor);
@@ -15,11 +15,9 @@ AFRAME.registerComponent('grab-controller', {
         this._onPointerDownBound = this._onPointerDown.bind(this);
         this._onPointerUpBound = this._onPointerUp.bind(this);
 
-        // Utiliser uniquement les événements VR pertinents
         this.el.addEventListener('triggerdown', this._onTriggerBound);
         this.el.addEventListener('gripdown', this._onTriggerBound);
-        
-        // Événements de relâchement
+
         this.el.addEventListener('triggerup', this._onTriggerUpBound);
         this.el.addEventListener('gripup', this._onTriggerUpBound);
     },
@@ -32,21 +30,16 @@ AFRAME.registerComponent('grab-controller', {
         this.el.object3D.getWorldPosition(controllerPos);
         this.el.object3D.getWorldQuaternion(controllerQuat);
 
-        // Position: l'objet suit la main avec un offset fixe
-        const newPos = new THREE.Vector3()
-            .copy(this._localGrabOffset)
-            .applyQuaternion(controllerQuat)
-            .add(controllerPos);
+        this.grabbedEl.object3D.position.copy(controllerPos);
 
-        // Rotation: l'objet prend DIRECTEMENT la rotation de la manette (comme le modèle de main)
-        // On applique juste un offset de rotation fixe (celui qu'avait l'objet au moment du grab)
-        const newQuat = new THREE.Quaternion()
-            .copy(controllerQuat)
-            .multiply(this._localGrabQuat);
+        if (this._handRotationAtGrab && this._savedRotationQuat) {
+            const rotationDelta = new THREE.Quaternion();
+            rotationDelta.copy(controllerQuat).multiply(this._handRotationAtGrab.clone().invert());
+            const finalQuat = new THREE.Quaternion();
+            finalQuat.copy(this._savedRotationQuat).multiply(rotationDelta);
 
-        // Mettre à jour directement l'object3D (plus rapide et synchrone)
-        this.grabbedEl.object3D.position.copy(newPos);
-        this.grabbedEl.object3D.quaternion.copy(newQuat);
+            this.grabbedEl.object3D.quaternion.copy(finalQuat);
+        }
     },
 
     remove: function () {
@@ -68,7 +61,6 @@ AFRAME.registerComponent('grab-controller', {
 
     _onTrigger: function(evt) {
         const now = Date.now();
-        // Vérifier que suffisamment de temps s'est écoulé depuis le dernier trigger
         if (now - this._lastTriggerTime < this._triggerDelay) {
             return;
         }
@@ -81,7 +73,6 @@ AFRAME.registerComponent('grab-controller', {
 
         let targetEl = null;
 
-        // Détection de proximité : trouver l'objet le plus proche du centre de la manette
         const controllerPos = new THREE.Vector3();
         if (this.el.object3D) {
             this.el.object3D.getWorldPosition(controllerPos);
@@ -90,7 +81,7 @@ AFRAME.registerComponent('grab-controller', {
         const sceneEl = document.querySelector('a-scene');
         const interactables = sceneEl.querySelectorAll('.interactable');
         let closestEl = null;
-        let closestDist = 0.3; // Distance max de détection (30cm)
+        let closestDist = 0.3;
 
         interactables.forEach(el => {
             if (!el.object3D) return;
@@ -105,11 +96,9 @@ AFRAME.registerComponent('grab-controller', {
             }
         });
 
-        // Si on trouve un objet proche, on le saisit
         if (closestEl) {
             targetEl = closestEl;
         } else {
-            // Fallback: utiliser le raycaster si aucun objet n'est assez proche
             if (this.raycaster && this.raycaster.intersectedEls) {
                 targetEl = this.raycaster.intersectedEls.find(el =>
                     el.classList && el.classList.contains('interactable')
@@ -120,8 +109,6 @@ AFRAME.registerComponent('grab-controller', {
         if (!targetEl) return;
 
         this.lockInputs(100);
-
-        // Cloner si c'est un original, sinon saisir directement
         if (targetEl.dataset.isOriginal === 'true') {
             this._createCloneAndGrab(targetEl);
         } else {
@@ -189,15 +176,7 @@ AFRAME.registerComponent('grab-controller', {
     },
 
     grab: function (el) {
-        // Vérifier si l'objet est déjà saisi par une autre main
-        if (el.dataset.isGrabbed === 'true') {
-            return; // Ne pas permettre le double grab
-        }
-        
         this.grabbedEl = el;
-        
-        // Marquer l'objet comme saisi
-        el.dataset.isGrabbed = 'true';
 
         const currentScale = el.getAttribute && el.getAttribute('scale');
         this._savedScale = currentScale ? {
@@ -206,59 +185,25 @@ AFRAME.registerComponent('grab-controller', {
             z: currentScale.z
         } : null;
 
-        // Sauvegarder les données pour restauration au drop
-        // On sauvegarde la string originale de l'attribut HTML
-        const physxAttr = el.getAttribute('physx-body');
-        if (physxAttr) {
-            // Récupérer le type et la masse depuis l'objet retourné par A-Frame
-            this._savedPhysxBody = `type: ${physxAttr.type || 'dynamic'}; mass: ${physxAttr.mass || 0.5}`;
-        } else {
-            this._savedPhysxBody = null;
-        }
-        const objPos = el.getAttribute('position');
-        const objRot = el.getAttribute('rotation');
-        this._savedPosition = objPos ? { ...objPos } : { x: 0, y: 0, z: 0 };
-        this._savedAbsRotation = objRot ? { ...objRot } : { x: 0, y: 0, z: 0 };
-
-        // Passer le corps physique en kinematic pendant le grab
-        // (kinematic = on peut le déplacer manuellement, il interagit avec les autres objets)
-        if (this._savedPhysxBody) {
-            el.setAttribute('physx-body', 'type: kinematic');
+        // Sauvegarder la rotation initiale de l'objet
+        const currentRotation = el.getAttribute('rotation');
+        if (currentRotation) {
+            this._savedRotation = { ...currentRotation };
+            // Convertir en quaternion pour les calculs
+            this._savedRotationQuat = new THREE.Quaternion();
+            const euler = new THREE.Euler(
+                THREE.MathUtils.degToRad(currentRotation.x || 0),
+                THREE.MathUtils.degToRad(currentRotation.y || 0),
+                THREE.MathUtils.degToRad(currentRotation.z || 0),
+                'YXZ'
+            );
+            this._savedRotationQuat.setFromEuler(euler);
         }
 
-        // Récupérer position/rotation de la main
-        const controllerPos = new THREE.Vector3();
-        const controllerQuat = new THREE.Quaternion();
+        // Sauvegarder la rotation initiale de la main
         if (this.el.object3D) {
-            this.el.object3D.getWorldPosition(controllerPos);
-            this.el.object3D.getWorldQuaternion(controllerQuat);
-        }
-
-        // Récupérer position/rotation de l'objet
-        const objWorldPos = new THREE.Vector3();
-        const objWorldQuat = new THREE.Quaternion();
-        if (el.object3D) {
-            el.object3D.getWorldPosition(objWorldPos);
-            el.object3D.getWorldQuaternion(objWorldQuat);
-        }
-
-        // Calculer l'offset de position dans l'espace local de la main
-        // (comme le modèle de main qui est enfant de la manette)
-        this._localGrabOffset = new THREE.Vector3()
-            .subVectors(objWorldPos, controllerPos)
-            .applyQuaternion(controllerQuat.clone().invert());
-        
-        // Calculer l'offset de rotation: rotation objet relative à la main
-        // newQuat = controllerQuat * localGrabQuat => localGrabQuat = inverse(controllerQuat) * objQuat
-        this._localGrabQuat = new THREE.Quaternion()
-            .copy(controllerQuat)
-            .invert()
-            .multiply(objWorldQuat);
-
-        // Changer le modèle de main vers la main fermée
-        const handModelEl = this.el.querySelector('[gltf-model]');
-        if (handModelEl) {
-            handModelEl.setAttribute('gltf-model', './public/assets/handClose.glb');
+            this._handRotationAtGrab = new THREE.Quaternion();
+            this.el.object3D.getWorldQuaternion(this._handRotationAtGrab);
         }
 
         this._finishGrab(el);
@@ -383,58 +328,15 @@ AFRAME.registerComponent('grab-controller', {
             }
         }
 
-        // Restaurer la physique en recréant le corps
-        if (this._savedPhysxBody && this.grabbedEl) {
-            const savedBody = this._savedPhysxBody;
-            const elToRestore = this.grabbedEl;
-            
-            // Supprimer d'abord le physx-body kinematic
-            try {
-                elToRestore.removeAttribute('physx-body');
-            } catch (e) {}
-            
-            // Recréer le corps physique après un court délai
-            // pour que PhysX puisse nettoyer l'ancien corps
-            setTimeout(() => {
-                if (elToRestore && elToRestore.object3D) {
-                    try {
-                        elToRestore.setAttribute('physx-body', savedBody);
-                    } catch (e) {
-                        console.warn('Error restoring physx-body:', e);
-                    }
-                }
-            }, 50);
-        }
-
-        // Remettre le modèle de main ouverte
-        const handModelEl = this.el.querySelector('[gltf-model]');
-        if (handModelEl) {
-            handModelEl.setAttribute('gltf-model', './public/assets/hand.glb');
-        }
-
-        // Retirer le marqueur de saisie
-        if (this.grabbedEl) {
-            this.grabbedEl.dataset.isGrabbed = 'false';
-        }
-
         // Nettoyer les données de grip
         this._savedRotation = null;
         this._savedRotationQuat = null;
         this._handRotationAtGrab = null;
-        this._savedPosition = null;
-        this._savedAbsRotation = null;
-        this._localGrabOffset = null;
-        this._localGrabQuat = null;
-        this._handGrabPos = null;
-        this._handGrabQuat = null;
-        this._objGrabPos = null;
-        this._objGrabQuat = null;
 
         if (this.raycaster) {
             try {
                 this.el.setAttribute('raycaster', 'enabled', true);
-                // Garder showLine false pour ne pas afficher le raycast
-                this.el.setAttribute('raycaster', 'showLine', false);
+                this.el.setAttribute('raycaster', 'showLine', true);
             } catch (e) {}
         }
 
@@ -451,7 +353,6 @@ AFRAME.registerComponent('grab-controller', {
         }
 
         this._savedScale = null;
-        this._savedPhysxBody = null;
         this.grabbedEl = null;
     },
 
@@ -466,9 +367,7 @@ AFRAME.registerComponent('grab-controller', {
         const rotation = originalEl.getAttribute('rotation') || { x:0, y:0, z:0 };
         const scale = originalEl.getAttribute('scale') || { x:1, y:1, z:1 };
         const itemType = originalEl.getAttribute('item-type') || '';
-        
-        // Récupérer la masse depuis data-physx-mass ou utiliser une valeur par défaut
-        const mass = originalEl.dataset.physxMass || '0.5';
+        const physxBody = originalEl.getAttribute('physx-body');
 
         const clone = document.createElement('a-entity');
         clone.classList.add('interactable');
@@ -477,11 +376,7 @@ AFRAME.registerComponent('grab-controller', {
         clone.setAttribute('rotation', rotation);
         clone.setAttribute('scale', scale);
         if (itemType) clone.setAttribute('item-type', itemType);
-        
-        // Les clones sont TOUJOURS dynamic avec leur masse
-        clone.setAttribute('physx-body', `type: dynamic; mass: ${mass}`);
-        clone.dataset.physxMass = mass;
-        
+        if (physxBody) clone.setAttribute('physx-body', physxBody);
         clone.setAttribute('stackable', '');
         clone.dataset.isClone = 'true';
         clone.dataset.isOriginal = 'false';
