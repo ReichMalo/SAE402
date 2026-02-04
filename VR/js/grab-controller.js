@@ -433,7 +433,8 @@ AFRAME.registerComponent('grab-controller', {
         if (this.raycaster) {
             try {
                 this.el.setAttribute('raycaster', 'enabled', true);
-                this.el.setAttribute('raycaster', 'showLine', true);
+                // Garder showLine false pour ne pas afficher le raycast
+                this.el.setAttribute('raycaster', 'showLine', false);
             } catch (e) {}
         }
 

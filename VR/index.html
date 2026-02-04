@@ -288,18 +288,16 @@
         >
           <a-entity
             cursor="rayOrigin: mouse"
-            raycaster="objects: .interactable; direction: 0.47119172506148044 0.2688851744103847 -0.8400470946416536; origin: 0 1.6 2; useWorldCoordinates: true; showLine: true"
+            raycaster="objects: .interactable; showLine: false; far: 0.15"
             grab-controller=""
-            line="end: 678.0207688609818 -716.3979369870574 154.3445194158143; start: 0 1.6 2; color: white"
           ></a-entity>
         </a-camera>
 
         <a-entity
           id="leftHand"
           oculus-touch-controls="hand: left; model: false"
-          raycaster="objects: .interactable; showLine: true"
+          raycaster="objects: .interactable; showLine: false; far: 0.15"
           grab-controller=""
-          line="end: 0 0 -1000; color: white"
         >
           <a-entity
             id="leftHandModel"
@@ -322,9 +320,8 @@
         <a-entity
           id="rightHand"
           oculus-touch-controls="hand: right; model: false"
-          raycaster="objects: .interactable; showLine: true"
+          raycaster="objects: .interactable; showLine: false; far: 0.15"
           grab-controller=""
-          line="end: 0 0 -1000; color: white"
         >
           <a-entity
             id="rightHandModel"
