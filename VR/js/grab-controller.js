@@ -189,7 +189,15 @@ AFRAME.registerComponent('grab-controller', {
     },
 
     grab: function (el) {
+        // Vérifier si l'objet est déjà saisi par une autre main
+        if (el.dataset.isGrabbed === 'true') {
+            return; // Ne pas permettre le double grab
+        }
+        
         this.grabbedEl = el;
+        
+        // Marquer l'objet comme saisi
+        el.dataset.isGrabbed = 'true';
 
         const currentScale = el.getAttribute && el.getAttribute('scale');
         this._savedScale = currentScale ? {
@@ -199,15 +207,23 @@ AFRAME.registerComponent('grab-controller', {
         } : null;
 
         // Sauvegarder les données pour restauration au drop
-        this._savedPhysxBody = el.getAttribute('physx-body');
+        // On sauvegarde la string originale de l'attribut HTML
+        const physxAttr = el.getAttribute('physx-body');
+        if (physxAttr) {
+            // Récupérer le type et la masse depuis l'objet retourné par A-Frame
+            this._savedPhysxBody = `type: ${physxAttr.type || 'dynamic'}; mass: ${physxAttr.mass || 0.5}`;
+        } else {
+            this._savedPhysxBody = null;
+        }
         const objPos = el.getAttribute('position');
         const objRot = el.getAttribute('rotation');
         this._savedPosition = objPos ? { ...objPos } : { x: 0, y: 0, z: 0 };
         this._savedAbsRotation = objRot ? { ...objRot } : { x: 0, y: 0, z: 0 };
 
-        // Désactiver la physique pendant le grab
+        // Passer le corps physique en kinematic pendant le grab
+        // (kinematic = on peut le déplacer manuellement, il interagit avec les autres objets)
         if (this._savedPhysxBody) {
-            el.removeAttribute('physx-body');
+            el.setAttribute('physx-body', 'type: kinematic');
         }
 
         // Récupérer position/rotation de la main
@@ -367,19 +383,38 @@ AFRAME.registerComponent('grab-controller', {
             }
         }
 
-        // Restaurer la physique sauvegardée
+        // Restaurer la physique en recréant le corps
         if (this._savedPhysxBody && this.grabbedEl) {
+            const savedBody = this._savedPhysxBody;
+            const elToRestore = this.grabbedEl;
+            
+            // Supprimer d'abord le physx-body kinematic
             try {
-                this.grabbedEl.setAttribute('physx-body', this._savedPhysxBody);
-            } catch (e) {
-                console.warn('Error restoring physx-body:', e);
-            }
+                elToRestore.removeAttribute('physx-body');
+            } catch (e) {}
+            
+            // Recréer le corps physique après un court délai
+            // pour que PhysX puisse nettoyer l'ancien corps
+            setTimeout(() => {
+                if (elToRestore && elToRestore.object3D) {
+                    try {
+                        elToRestore.setAttribute('physx-body', savedBody);
+                    } catch (e) {
+                        console.warn('Error restoring physx-body:', e);
+                    }
+                }
+            }, 50);
         }
 
         // Remettre le modèle de main ouverte
         const handModelEl = this.el.querySelector('[gltf-model]');
         if (handModelEl) {
             handModelEl.setAttribute('gltf-model', 'assets/hand.glb');
+        }
+
+        // Retirer le marqueur de saisie
+        if (this.grabbedEl) {
+            this.grabbedEl.dataset.isGrabbed = 'false';
         }
 
         // Nettoyer les données de grip
@@ -430,7 +465,9 @@ AFRAME.registerComponent('grab-controller', {
         const rotation = originalEl.getAttribute('rotation') || { x:0, y:0, z:0 };
         const scale = originalEl.getAttribute('scale') || { x:1, y:1, z:1 };
         const itemType = originalEl.getAttribute('item-type') || '';
-        const physxBody = originalEl.getAttribute('physx-body');
+        
+        // Récupérer la masse depuis data-physx-mass ou utiliser une valeur par défaut
+        const mass = originalEl.dataset.physxMass || '0.5';
 
         const clone = document.createElement('a-entity');
         clone.classList.add('interactable');
@@ -439,7 +476,11 @@ AFRAME.registerComponent('grab-controller', {
         clone.setAttribute('rotation', rotation);
         clone.setAttribute('scale', scale);
         if (itemType) clone.setAttribute('item-type', itemType);
-        if (physxBody) clone.setAttribute('physx-body', physxBody);
+        
+        // Les clones sont TOUJOURS dynamic avec leur masse
+        clone.setAttribute('physx-body', `type: dynamic; mass: ${mass}`);
+        clone.dataset.physxMass = mass;
+        
         clone.setAttribute('stackable', '');
         clone.dataset.isClone = 'true';
         clone.dataset.isOriginal = 'false';
