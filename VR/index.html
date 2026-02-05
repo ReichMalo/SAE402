@@ -19,39 +19,28 @@
         device-orientation-permission-ui=""
         physx="autoLoad: true; delay: 0; gravity: 0 -9.8 0; wasmUrl: https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/wasm/physx.release.wasm"
 >
+  <!-- Option A : serveur sert `VR` comme racine -->
   <a-assets>
-    <a-asset-item id="model-table" src="assets/Table.glb"></a-asset-item>
-    <a-asset-item id="model-patty" src="assets/patty.glb"></a-asset-item>
-    <a-asset-item
-            id="model-bun-bottom"
-            src="assets/bunBottom.glb"
-    ></a-asset-item>
-    <a-asset-item
-            id="model-bun-top"
-            src="assets/bunTop.glb"
-    ></a-asset-item>
-    <a-asset-item id="model-cheese" src="assets/cheese.glb"></a-asset-item>
-    <a-asset-item id="model-tomato" src="assets/tomato.glb"></a-asset-item>
-    <a-asset-item id="model-onion" src="assets/onion.glb"></a-asset-item>
-    <a-asset-item id="model-pan" src="assets/Pan.glb"></a-asset-item>
-    <a-asset-item id="model-plate" src="assets/Plate.glb"></a-asset-item>
-    <a-asset-item
-            id="model-ketchup"
-            src="assets/ketchup.glb"
-    ></a-asset-item>
-    <a-asset-item
-            id="model-mustard"
-            src="assets/mustard.glb"
-    ></a-asset-item>
-    <a-asset-item id="model-trash" src="assets/trash.glb"></a-asset-item>
-    <a-asset-item
-            id="model-spatula"
-            src="assets/spatula.glb"
-    ></a-asset-item>
-    <a-asset-item id="hand-model" src="assets/hand.glb"></a-asset-item>
+    <a-asset-item id="model-table" src="/public/assets/Table.glb"></a-asset-item>
+    <a-asset-item id="model-patty" src="/public/assets/patty.glb"></a-asset-item>
+    <a-asset-item id="model-bun-bottom" src="/public/assets/bunBottom.glb"></a-asset-item>
+    <a-asset-item id="model-bun-top" src="/public/assets/bunTop.glb"></a-asset-item>
+    <a-asset-item id="model-cheese" src="/public/assets/cheese.glb"></a-asset-item>
+    <a-asset-item id="model-tomato" src="/public/assets/tomato.glb"></a-asset-item>
+    <a-asset-item id="model-onion" src="/public/assets/onion.glb"></a-asset-item>
+    <a-asset-item id="model-pan" src="/public/assets/Pan.glb"></a-asset-item>
+    <a-asset-item id="model-plate" src="/public/assets/Plate.glb"></a-asset-item>
+    <a-asset-item id="model-ketchup" src="/public/assets/ketchup.glb"></a-asset-item>
+    <a-asset-item id="model-mustard" src="/public/assets/mustard.glb"></a-asset-item>
+    <a-asset-item id="model-trash" src="/public/assets/trash.glb"></a-asset-item>
+    <a-asset-item id="model-spatula" src="/public/assets/spatula.glb"></a-asset-item>
+    <a-asset-item id="hand-model" src="/public/assets/hand.glb"></a-asset-item>
 
-    <audio id="sizzle-sound" src="assets/sizzle.mp3"></audio>
+    <audio id="sizzle-sound" src="/public/assets/sizzle.mp3"></audio>
   </a-assets>
+
+
+
 
   <a-entity customer-spawner="interval: 8000; maxCustomers: 2"></a-entity>
 
