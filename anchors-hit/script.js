@@ -1,4 +1,6 @@
-// Composant pour placer le curseur sur les surfaces réelles
+/* anchors-hit/script.js */
+
+// --- 1. Composant de Visée (Gestion couleurs et validité) ---
 AFRAME.registerComponent("hit-test-cursor", {
     schema: {
         cursor: { type: "selector" },
@@ -8,47 +10,48 @@ AFRAME.registerComponent("hit-test-cursor", {
         this.sceneEl = this.el;
         this.cursorEl = this.data.cursor;
         this.ringEl = this.data.ring;
-        this.session = null;
+
         this.hitTestSource = null;
         this.refSpace = null;
-        this.viewerSpace = null;
+        this.isValidPosition = false;
+        this.currentError = "";
+
+        // --- REGLAGES ---
+        this.MAX_DISTANCE = 10.0;   // AUGMENTÉ : Vous pouvez viser jusqu'à 10m
+        this.MAX_HEIGHT = 1.5;      // Hauteur max (2m30)
+        this.MIN_POINT_DIST = 0.8;  // AUGMENTÉ : Interdit de poser à moins de 80cm d'un autre point
+
+        // Seuil de platitude (0.6 = accepte un peu de pente, mais refuse les murs droits)
+        this.FLAT_THRESHOLD = 0.6;
 
         this.onEnterVR = this.onEnterVR.bind(this);
-        this.onExitVR = this.onExitVR.bind(this);
         this.onXRFrame = this.onXRFrame.bind(this);
-
         this.sceneEl.addEventListener("enter-vr", this.onEnterVR);
-        this.sceneEl.addEventListener("exit-vr", this.onExitVR);
     },
+
     onEnterVR: function () {
         const session = this.sceneEl.renderer.xr.getSession();
         if (!session) return;
-        this.session = session;
-        const self = this;
 
         session.requestReferenceSpace("viewer").then((vs) => {
-            self.viewerSpace = vs;
+            this.viewerSpace = vs;
             session.requestReferenceSpace("local-floor").then((rs) => {
-                self.refSpace = rs;
-                session.requestHitTestSource({ space: self.viewerSpace }).then((src) => {
-                    self.hitTestSource = src;
-                    session.requestAnimationFrame(self.onXRFrame);
+                this.refSpace = rs;
+                session.requestHitTestSource({ space: this.viewerSpace }).then((src) => {
+                    this.hitTestSource = src;
+                    session.requestAnimationFrame(this.onXRFrame);
                 });
             });
         });
     },
-    onExitVR: function () {
-        this.hitTestSource = null;
-        this.session = null;
-        if (this.cursorEl) this.cursorEl.setAttribute("visible", "false");
-    },
+
     onXRFrame: function (time, frame) {
         const session = frame.session;
         session.requestAnimationFrame(this.onXRFrame);
 
         if (!this.hitTestSource || !this.refSpace) return;
 
-        // Si la zone est déjà créée, on cache le curseur
+        // Cacher le curseur si terminé
         const zoneTool = this.sceneEl.components["zone-tool"];
         if (zoneTool && zoneTool.isZoneCreated) {
             this.cursorEl.setAttribute("visible", "false");
@@ -58,16 +61,68 @@ AFRAME.registerComponent("hit-test-cursor", {
         const results = frame.getHitTestResults(this.hitTestSource);
         if (results.length > 0) {
             const pose = results[0].getPose(this.refSpace);
+            const pos = pose.transform.position;
+            const rot = pose.transform.orientation;
+
             this.cursorEl.setAttribute("visible", "true");
-            this.cursorEl.object3D.position.copy(pose.transform.position);
-            if (this.ringEl) this.ringEl.setAttribute("rotation", "-90 0 0");
+            this.cursorEl.object3D.position.copy(pos);
+
+            // --- VÉRIFICATIONS ---
+            let error = "";
+
+            // Convertir la position en THREE.Vector3 pour les calculs de distance
+            const posVec3 = new THREE.Vector3(pos.x, pos.y, pos.z);
+
+            // 1. Distance Joueur (Vous vouliez pouvoir aller loin)
+            const camera = this.sceneEl.camera;
+            if (camera && camera.position.distanceTo(posVec3) > this.MAX_DISTANCE) {
+                error = "Trop loin (Max 10m)";
+            }
+
+            // 2. Hauteur
+            if (pos.y > this.MAX_HEIGHT) {
+                error = "Trop haut";
+            }
+
+            // 3. Mur / Pente (Anti-Mur)
+            const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
+            const normal = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
+
+            if (normal.y < this.FLAT_THRESHOLD) {
+                error = "Impossible sur un mur";
+            }
+
+            // 4. Proximité (Vous ne vouliez pas que ce soit trop proche)
+            if (zoneTool && zoneTool.points.length > 0) {
+                for (let i = 0; i < zoneTool.points.length; i++) {
+                    if (posVec3.distanceTo(zoneTool.points[i]) < this.MIN_POINT_DIST) {
+                        error = "Trop près d'un autre point !";
+                        break;
+                    }
+                }
+            }
+
+            // --- RÉSULTAT ---
+            this.currentError = error;
+            if (error === "") {
+                this.isValidPosition = true;
+                if (this.ringEl) this.ringEl.setAttribute("color", "#00FF7F"); // VERT
+            } else {
+                this.isValidPosition = false;
+                if (this.ringEl) this.ringEl.setAttribute("color", "#FF0000"); // ROUGE
+            }
+
+            // Garder le cercle à plat
+            if (this.ringEl) this.ringEl.object3D.rotation.set(-Math.PI / 2, 0, 0);
+
         } else {
             this.cursorEl.setAttribute("visible", "false");
+            this.isValidPosition = false;
         }
     },
 });
 
-// Composant Principal : Gestion de la Zone et Apparition de la Cuisine
+// --- 2. Composant Zone & Cuisine ---
 AFRAME.registerComponent("zone-tool", {
     schema: {
         root: { type: "selector" },
@@ -78,7 +133,6 @@ AFRAME.registerComponent("zone-tool", {
         this.points = [];
         this.markers = [];
         this.isZoneCreated = false;
-        this.kitchenEntity = null;
 
         this.onSelect = this.onSelect.bind(this);
         this.resetZone = this.resetZone.bind(this);
@@ -88,35 +142,40 @@ AFRAME.registerComponent("zone-tool", {
             if (session) session.addEventListener("select", this.onSelect);
         });
 
-        // Bouton de reset
         const resetBtn = document.getElementById("reset-zone-button");
         if (resetBtn) resetBtn.addEventListener("click", this.resetZone);
-
         this.statusEl = document.getElementById("status");
     },
 
     onSelect: function () {
         if (this.isZoneCreated || !this.data.cursor.getAttribute("visible")) return;
 
+        // Vérifier validité
+        const cursorComp = this.el.sceneEl.components["hit-test-cursor"];
+        if (cursorComp && !cursorComp.isValidPosition) {
+            if (cursorComp.currentError) {
+                this.setStatus("❌ " + cursorComp.currentError);
+            }
+            return;
+        }
+
         const pos = new THREE.Vector3();
         this.data.cursor.object3D.getWorldPosition(pos);
 
-        // Ajouter un point
         this.points.push(pos.clone());
         this.addMarker(pos);
 
-        const count = this.points.length;
-        this.setStatus(`Point ${count}/4 défini.`);
-
-        if (count === 4) {
+        if (this.points.length === 4) {
             this.createKitchen();
+        } else {
+            this.setStatus(`Point ${this.points.length}/4 validé.`);
         }
     },
 
     addMarker: function (pos) {
         const m = document.createElement("a-sphere");
-        m.setAttribute("radius", "0.02");
-        m.setAttribute("color", "red");
+        m.setAttribute("radius", "0.03");
+        m.setAttribute("color", "#00AAFF");
         m.setAttribute("position", pos);
         this.data.root.appendChild(m);
         this.markers.push(m);
@@ -124,165 +183,113 @@ AFRAME.registerComponent("zone-tool", {
 
     createKitchen: function () {
         this.isZoneCreated = true;
-        this.setStatus("Zone créée ! Chargement de la cuisine...");
-
-        // Afficher bouton reset
+        this.setStatus("Construction...");
         document.getElementById("reset-zone-button").style.display = "block";
 
-        // 1. Calculer le centre (Centroïde)
-        const center = new THREE.Vector3();
-        this.points.forEach(p => center.add(p));
-        center.divideScalar(4);
-
-        // 2. Calculer la largeur et profondeur approximatives
-        // On assume que p0->p1 est la largeur et p1->p2 est la profondeur
+        // 1. Calculs
+        const center = new THREE.Vector3().addVectors(this.points[0], this.points[2]).multiplyScalar(0.5);
         const width = this.points[0].distanceTo(this.points[1]);
         const depth = this.points[1].distanceTo(this.points[2]);
+        const vX = new THREE.Vector3().subVectors(this.points[1], this.points[0]).normalize();
+        const angle = Math.atan2(vX.z, vX.x);
 
-        // 3. Calculer l'orientation
-        // On veut que la cuisine fasse face au joueur, on aligne sur le vecteur p0->p1
-        const v1 = new THREE.Vector3().subVectors(this.points[1], this.points[0]).normalize();
-        const angle = Math.atan2(v1.z, v1.x); // Rotation Y basique
-
-        // 4. Créer l'entité racine de la cuisine
+        // 2. Structure
         this.kitchenEntity = document.createElement("a-entity");
         this.kitchenEntity.object3D.position.copy(center);
-        // On pivote pour s'aligner avec les points tracés
         this.kitchenEntity.object3D.rotation.y = -angle;
 
-        // 5. Créer la surface physique (Table invisible ou semi-transparente)
-        // On le place un peu plus bas pour que les objets posés soient bien "sur" les points
-        const tableBody = document.createElement("a-box");
-        tableBody.setAttribute("width", width);
-        tableBody.setAttribute("height", "0.05"); // épaisseur fine
-        tableBody.setAttribute("depth", depth);
-        tableBody.setAttribute("position", "0 -0.025 0");
-        tableBody.setAttribute("material", "color: #333; opacity: 0.8; transparent: true");
-        tableBody.setAttribute("physx-body", "type: static"); // Le sol est statique
-        this.kitchenEntity.appendChild(tableBody);
-
-        // 6. Ajouter les éléments de la cuisine (Décalage relatif au centre)
-        // Note : On met Y à environ 0.1 pour qu'ils tombent sur la table
-        this.spawnKitchenItems(this.kitchenEntity, width, depth);
+        // 3. Table Solide
+        const table = document.createElement("a-box");
+        table.setAttribute("width", width);
+        table.setAttribute("height", "0.05");
+        table.setAttribute("depth", depth);
+        table.setAttribute("position", "0 -0.025 0");
+        table.setAttribute("color", "#444");
+        table.setAttribute("opacity", "1");
+        table.setAttribute("physx-body", "type: static");
+        this.kitchenEntity.appendChild(table);
 
         this.data.root.appendChild(this.kitchenEntity);
 
-        // Nettoyer les marqueurs rouges
+        // 4. Objets
+        setTimeout(() => {
+            this.spawnItems(this.kitchenEntity, width, depth);
+            this.setStatus("Cuisine prête !");
+        }, 200);
+
+        // Nettoyage
         this.markers.forEach(m => m.parent.removeChild(m));
         this.markers = [];
     },
 
-    spawnKitchenItems: function (parent, tableW, tableD) {
-        // On définit des positions relatives proportionnelles à la taille de la zone tracée
-        // Exemple : La poêle à gauche, les ingrédients au milieu, l'assiette à droite.
+    spawnItems: function (parent, w, d) {
+        const y = 0.3;
 
-        const htmlContent = `
-      <a-entity
-          id="frying-pan"
-          class="interactable"
-          gltf-model="#model-pan"
-          position="${-tableW * 0.3} 0.1 0"
-          scale="0.2 0.2 0.2"
-          physx-body="type: dynamic; mass: 0.5"
-          item-type="pan"
-          sound="src: #sizzle-sound; on: start-cooking; poolSize: 5"
-      ></a-entity>
+        const html = `
+      <a-entity id="frying-pan" class="interactable" gltf-model="#model-pan" 
+        position="${-w*0.3} ${y} 0" scale="0.2 0.2 0.2" 
+        physx-body="type: dynamic; mass: 2" item-type="pan"
+        sound="src: #sizzle-sound; on: start-cooking; poolSize: 5">
+      </a-entity>
+
+      <a-entity class="interactable" gltf-model="#model-spatula" 
+        position="${-w*0.4} ${y} 0.15" scale="0.4 0.4 0.4" rotation="0 90 0"
+        physx-body="type: dynamic; mass: 0.5" item-type="spatula">
+      </a-entity>
+
+      <a-entity class="interactable" gltf-model="#model-bun-bottom"
+        position="${-w*0.15} ${y} ${-d*0.2}" scale="0.3 0.3 0.3"
+        physx-body="type: dynamic; mass: 0.5" item-type="bun" infinite-supply data-is-original="true">
+      </a-entity>
       
-      <a-entity
-          class="interactable"
-          gltf-model="#model-spatula"
-          position="${-tableW * 0.4} 0.1 ${tableD * 0.2}"
-          scale="0.4 0.4 0.4"
-          rotation="0 90 0"
-          physx-body="type: dynamic; mass: 0.1"
-          item-type="spatula"
-      ></a-entity>
+      <a-entity class="interactable" gltf-model="#model-patty"
+        position="0 ${y} ${-d*0.2}" scale="0.6 0.6 0.6"
+        physx-body="type: dynamic; mass: 0.5" item-type="patty" infinite-supply data-is-original="true">
+      </a-entity>
 
-      <a-entity
-          id="serving-plate"
-          class="interactable"
-          gltf-model="#model-plate"
-          position="${tableW * 0.3} 0.1 0"
-          scale="0.4 0.4 0.4"
-          physx-body="type: dynamic; mass: 0.3"
-          item-type="plate"
-          infinite-supply
-          data-is-original="true"
-      ></a-entity>
-
-      <a-entity
-          class="interactable"
-          gltf-model="#model-bun-bottom"
-          position="0 0.1 ${-tableD * 0.2}"
-          scale="0.3 0.3 0.3"
-          physx-body="type: dynamic; mass: 0.2"
-          item-type="bun"
-          infinite-supply
-          data-is-original="true"
-      ></a-entity>
-
-      <a-entity
-          class="interactable"
-          gltf-model="#model-bun-top"
-          position="${tableW * 0.1} 0.1 ${-tableD * 0.2}"
-          scale="0.3 0.3 0.3"
-          physx-body="type: dynamic; mass: 0.2"
-          item-type="bun"
-          infinite-supply
-          data-is-original="true"
-      ></a-entity>
-
-      <a-entity
-          class="interactable"
-          gltf-model="#model-patty"
-          position="${-tableW * 0.1} 0.1 ${-tableD * 0.2}"
-          scale="0.6 0.6 0.6"
-          physx-body="type: dynamic; mass: 0.3"
-          item-type="patty"
-          infinite-supply
-          data-is-original="true"
-      ></a-entity>
-
-      <a-entity
-          class="interactable"
-          gltf-model="#model-cheese"
-          position="0 0.1 ${tableD * 0.2}"
-          scale="0.6 0.6 0.6"
-          physx-body="type: dynamic; mass: 0.1"
-          item-type="cheese"
-          infinite-supply
-          data-is-original="true"
-      ></a-entity>
+      <a-entity class="interactable" gltf-model="#model-cheese"
+        position="${w*0.15} ${y} ${-d*0.2}" scale="0.6 0.6 0.6"
+        physx-body="type: dynamic; mass: 0.5" item-type="cheese" infinite-supply data-is-original="true">
+      </a-entity>
       
-      <a-entity
-          gltf-model="#model-trash"
-          position="${tableW * 0.6} -0.5 0" 
-          scale="0.1 0.1 0.1"
-          trash-bin
-          physx-body="type: static"
-      ></a-entity>
+      <a-entity class="interactable" gltf-model="#model-bun-top"
+        position="${w*0.3} ${y} ${-d*0.2}" scale="0.3 0.3 0.3"
+        physx-body="type: dynamic; mass: 0.5" item-type="bun" infinite-supply data-is-original="true">
+      </a-entity>
+
+      <a-entity id="serving-plate" class="interactable" gltf-model="#model-plate"
+        position="${w*0.2} ${y} ${d*0.15}" scale="0.4 0.4 0.4"
+        physx-body="type: dynamic; mass: 1" item-type="plate" infinite-supply data-is-original="true">
+      </a-entity>
+      
+      <a-entity class="interactable" gltf-model="#model-ketchup"
+        position="${w*0.4} ${y} 0" scale="0.5 0.5 0.5"
+        physx-body="type: dynamic; mass: 0.5" item-type="ketchup">
+      </a-entity>
+
+      <a-entity gltf-model="#model-trash" 
+        position="${w*0.6} -0.5 0" scale="0.1 0.1 0.1"
+        trash-bin 
+        physx-body="type: static">
+      </a-entity>
     `;
 
-        // Injection du HTML
-        parent.insertAdjacentHTML('beforeend', htmlContent);
-    },
-
-    resetZone: function () {
-        this.points = [];
-        this.isZoneCreated = false;
-        this.markers.forEach(m => { if(m.parent) m.parent.removeChild(m); });
-        this.markers = [];
-
-        if (this.kitchenEntity && this.kitchenEntity.parent) {
-            this.kitchenEntity.parent.removeChild(this.kitchenEntity);
-        }
-        this.kitchenEntity = null;
-
-        document.getElementById("reset-zone-button").style.display = "none";
-        this.setStatus("Reset effectué. Placez 4 nouveaux points.");
+        parent.insertAdjacentHTML("beforeend", html);
     },
 
     setStatus: function (msg) {
         if (this.statusEl) this.statusEl.textContent = msg;
+    },
+
+    resetZone: function () {
+        if (this.kitchenEntity && this.kitchenEntity.parent) {
+            this.kitchenEntity.parent.removeChild(this.kitchenEntity);
+        }
+        this.markers.forEach(m => { if(m.parent) m.parent.removeChild(m); });
+        this.markers = [];
+        this.points = [];
+        this.isZoneCreated = false;
+        document.getElementById("reset-zone-button").style.display = "none";
+        this.setStatus("Placez 4 points pour la table.");
     }
 });
