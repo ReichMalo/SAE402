@@ -10,6 +10,7 @@
     <script src="https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/dist/physx.min.js"></script>
 
     <script src="js/main.js"></script>
+    <script src="js/make-burger.js"></script>
   </head>
   <body>
     <section id="menu">
@@ -42,11 +43,11 @@
         ></a-asset-item>
         <a-asset-item
           id="model-bun-bottom"
-          src="./public/assets/bunTop.glb"
+          src="./public/assets/bunBottom.glb"
         ></a-asset-item>
         <a-asset-item
           id="model-bun-top"
-          src="./public/assets/bunBottom.glb"
+          src="./public/assets/bunTop.glb"
         ></a-asset-item>
         <a-asset-item
           id="model-cheese"
@@ -67,14 +68,6 @@
         <a-asset-item
           id="model-plate"
           src="./public/assets/Plate.glb"
-        ></a-asset-item>
-        <a-asset-item
-          id="model-ketchup"
-          src="./public/assets/ketchup.glb"
-        ></a-asset-item>
-        <a-asset-item
-          id="model-mustard"
-          src="./public/assets/mustard.glb"
         ></a-asset-item>
         <a-asset-item
           id="model-trash"
@@ -170,9 +163,10 @@
         data-is-original="true"
         data-physx-mass="0.3"
         physx-body="type: static"
+        plate-target
       ></a-entity>
-
       <a-entity
+        id="bunTop"
         class="interactable"
         gltf-model="./public/assets/bunTop.glb"
         position="0.88 0.86 -1.15"
@@ -189,6 +183,7 @@
 
       <a-entity
         class="interactable"
+        id="bunBottom"
         gltf-model="./public/assets/bunBottom.glb"
         position="1.19 0.86 -1.15"
         scale="0.3 0.3 0.3"
@@ -200,6 +195,7 @@
       ></a-entity>
 
       <a-entity
+        id="patty"
         class="interactable"
         gltf-model="./public/assets/patty.glb"
         position="0.88 0.85 -0.75"
@@ -213,6 +209,7 @@
       ></a-entity>
 
       <a-entity
+        id="cheese"
         class="interactable"
         gltf-model="./public/assets/cheese.glb"
         position="1.29456 0.85 -0.29922"
@@ -226,6 +223,7 @@
       ></a-entity>
 
       <a-entity
+        id="tomato"
         class="interactable"
         gltf-model="./public/assets/tomato.glb"
         position="1.16678 0.85 -0.5527"
@@ -239,6 +237,7 @@
       ></a-entity>
 
       <a-entity
+        id="onion"
         class="interactable"
         gltf-model="./public/assets/onion.glb"
         position="1.23 0.85 -0.85799"
@@ -250,28 +249,6 @@
         data-is-original="true"
         data-physx-mass="0.1"
         physx-body="type: static"
-      ></a-entity>
-
-      <a-entity
-        class="interactable"
-        gltf-model="./public/assets/ketchup.glb"
-        id="ketchup"
-        position="1.25 0.85 0.08"
-        scale="0.5 0.5 0.5"
-        stackable=""
-        item-type="ketchup"
-        physx-body="type: dynamic; mass: 0.2"
-      ></a-entity>
-
-      <a-entity
-        class="interactable"
-        gltf-model="./public/assets/mustard.glb"
-        id="mustard"
-        position="1.25 0.85 -0.05"
-        scale="0.5 0.5 0.5"
-        stackable=""
-        item-type="mustard"
-        physx-body="type: dynamic; mass: 0.2"
       ></a-entity>
 
       <a-entity
@@ -319,9 +296,11 @@
           rotation="-21.199438419840472 -55.46231456866367 0"
           data-aframe-inspector-original-camera=""
         >
+          <a-entity xr-debug-hud></a-entity>
+
           <a-entity
             cursor="rayOrigin: mouse"
-            raycaster="objects: .interactable; showLine: false; far: 0.15"
+            raycaster="objects: .interactable, .clickable; showLine: false; far: 0.2"
             grab-controller=""
           ></a-entity>
         </a-camera>
@@ -329,8 +308,9 @@
         <a-entity
           id="leftHand"
           oculus-touch-controls="hand: left; model: false"
-          raycaster="objects: .interactable; showLine: false; far: 0.15"
+          raycaster="objects: .interactable, .clickable; showLine: false; far: 0.2"
           grab-controller=""
+          rayclick-on-buttons
         >
           <a-entity
             id="leftHandModel"
@@ -353,8 +333,9 @@
         <a-entity
           id="rightHand"
           oculus-touch-controls="hand: right; model: false"
-          raycaster="objects: .interactable; showLine: false; far: 0.15"
+          raycaster="objects: .interactable, .clickable; showLine: false; far: 0.2"
           grab-controller=""
+          rayclick-on-buttons
         >
           <a-entity
             id="rightHandModel"
