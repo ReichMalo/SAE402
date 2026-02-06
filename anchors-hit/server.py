@@ -25,6 +25,6 @@ httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 
 local_ip = get_local_ip()
 print(f'Server running on https://0.0.0.0:8443')
-print(f'Access from Quest 3: https://{local_ip}:8443')
+print(f'Access from Quest 3: https://{local_ip}:8443/')
 print('Press Ctrl+C to stop')
 httpd.serve_forever()
