@@ -90,7 +90,7 @@ AFRAME.registerComponent('grab-controller', {
         const sceneEl = document.querySelector('a-scene');
         const interactables = sceneEl.querySelectorAll('.interactable');
         let closestEl = null;
-        let closestDist = 0.3; // Distance max de détection (30cm)
+        let closestDist = 0.15; // Distance max de détection (15cm)
 
         interactables.forEach(el => {
             if (!el.object3D) return;

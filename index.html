@@ -1,340 +1,89 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>XR Burger Workshop</title>
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@d5f3f8/dist/aframe-extras.min.js"></script>
-  <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/dist/physx.min.js"></script>
-
-  <script src="js/main.js"></script>
-</head>
-<body>
-<a-scene
-        xr-mode-ui="XRMode: xr"
-        inspector=""
-        keyboard-shortcuts=""
-        screenshot=""
-        device-orientation-permission-ui=""
-        physx="autoLoad: true; delay: 0; gravity: 0 -9.8 0; wasmUrl: https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/wasm/physx.release.wasm"
->
-  <a-assets>
-    <a-asset-item id="model-table" src="assets/Table.glb"></a-asset-item>
-    <a-asset-item id="model-patty" src="assets/patty.glb"></a-asset-item>
-    <a-asset-item
-            id="model-bun-bottom"
-            src="assets/bunTop.glb"
-    ></a-asset-item>
-    <a-asset-item
-            id="model-bun-top"
-            src="assets/bunBottom.glb"
-    ></a-asset-item>
-    <a-asset-item id="model-cheese" src="../assets/cheese.glb"></a-asset-item>
-    <a-asset-item id="model-tomato" src="assets/tomato.glb"></a-asset-item>
-    <a-asset-item id="model-onion" src="assets/onion.glb"></a-asset-item>
-    <a-asset-item id="model-pan" src="assets/Pan.glb"></a-asset-item>
-    <a-asset-item id="model-plate" src="assets/Plate.glb"></a-asset-item>
-    <a-asset-item
-            id="model-ketchup"
-            src="assets/ketchup.glb"
-    ></a-asset-item>
-    <a-asset-item
-            id="model-mustard"
-            src="assets/mustard.glb"
-    ></a-asset-item>
-    <a-asset-item id="model-trash" src="assets/trash.glb"></a-asset-item>
-    <a-asset-item
-            id="model-spatula"
-            src="assets/spatula.glb"
-    ></a-asset-item>
-    <a-asset-item id="hand-model" src="assets/hand.glb"></a-asset-item>
-
-    <audio id="sizzle-sound" src="assets/sizzle.mp3"></audio>
-  </a-assets>
-
-  <a-entity customer-spawner="interval: 8000; maxCustomers: 2"></a-entity>
-
-  <a-box
-          id="worktop"
-          position="0 0.8 -1"
-          width="3"
-          height="0.1"
-          depth="0.8"
-          color="#444"
-          material=""
-          geometry="height: 0.11; depth: 1.05"
-          visible=""
-          physx-body="type: static"
-  ></a-box>
-  <a-box
-          id="worktop-2"
-          position="1.08 0.8 0.21"
-          width="3"
-          height="0.1"
-          depth="0.8"
-          color="#444"
-          material=""
-          geometry="height: 0.11; depth: 1.06"
-          rotation="0.02 -90 0.07"
-          scale="0.5 1 0.8"
-          visible=""
-          physx-body="type: static"
-  ></a-box>
-  <a-box
-          id="worktop-3"
-          position="1.08 0.8 0.21"
-          width="3"
-          height="0.1"
-          depth="0.8"
-          color="#444"
-          material=""
-          geometry="height: 0.11; depth: 1.06"
-          rotation="0.02 -90 0.07"
-          scale="0.5 1 0.8"
-          visible=""
-          physx-body="type: static"
-  ></a-box>
-
-  <a-box
-          id="grill"
-          position="0.01 0.86 -1"
-          width="0.6"
-          height="0.05"
-          depth="0.5"
-          color="#222"
-          material=""
-          geometry=""
-          physx-body="type: static"
-  ></a-box>
-
-  <a-entity
-          id="frying-pan"
-          class="interactable"
-          gltf-model="assets/pan.glb"
-          position="-0.01942 0.947 -0.70134"
-          scale="0.2 0.2 0.2"
-          rotation="0 180 0"
-          stackable=""
-          item-type="pan"
-          sound="src: assets/sizzle.mp3; on: start-cooking; poolSize: 5"
-          physx-body="type: dynamic; mass: 0.5"
-  ></a-entity>
-
-  <a-entity
-          id="serving-plate"
-          class="interactable"
-          gltf-model="assets/plate.glb"
-          position="0.95 0.89 0.42"
-          scale="0.4 0.4 0.4"
-          stackable=""
-          item-type="plate"
-          infinite-supply=""
-          data-is-original="true"
-          physx-body="type: dynamic; mass: 0.3"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/bunTop.glb"
-          position="0.88 0.86 -1.15"
-          scale="0.3 0.3 0.3"
-          stackable=""
-          item-type="bun"
-          infinite-supply=""
-          data-is-original="true"
-          rotation=""
-          visible=""
-          physx-body="type: dynamic; mass: 0.2"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/bunBottom.glb"
-          position="1.19 0.86 -1.15"
-          scale="0.3 0.3 0.3"
-          stackable=""
-          item-type="bun"
-          infinite-supply=""
-          data-is-original="true"
-          rotation=""
-          physx-body="type: dynamic; mass: 0.2"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/patty.glb"
-          position="0.88 0.85 -0.75"
-          stackable=""
-          item-type="patty"
-          scale="0.6 0.6 0.6"
-          infinite-supply=""
-          data-is-original="true"
-          physx-body="type: dynamic; mass: 0.3"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/cheese.glb"
-          position="1.29456 0.85 -0.29922"
-          stackable=""
-          item-type="cheese"
-          scale="0.6 0.6 0.6"
-          infinite-supply=""
-          data-is-original="true"
-          physx-body="type: dynamic; mass: 0.15"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/tomato.glb"
-          position="1.16678 0.85 -0.5527"
-          scale="0.15 0.15 0.15"
-          stackable=""
-          item-type="tomato"
-          infinite-supply=""
-          data-is-original="true"
-          physx-body="type: dynamic; mass: 0.1"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/onion.glb"
-          position="1.23 0.85 -0.85799"
-          scale="0.25 0.25 0.25"
-          stackable=""
-          item-type="onion"
-          rotation="-0.21000000000000002 0 0"
-          infinite-supply=""
-          data-is-original="true"
-          physx-body="type: dynamic; mass: 0.1"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/ketchup.glb"
-          id="ketchup"
-          position="1.25 0.85 0.08"
-          scale="0.5 0.5 0.5"
-          stackable=""
-          item-type="ketchup"
-          physx-body="type: dynamic; mass: 0.2"
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/mustard.glb"
-          id="mustard"
-          position="1.25 0.85 -0.05"
-          scale="0.5 0.5 0.5"
-          stackable=""
-          item-type="mustard"
-          physx-body="type: dynamic; mass: 0.2"
-  ></a-entity>
-
-  <a-entity
-          gltf-model="assets/trash.glb"
-          id="trash"
-          position="1.00147 0.6 1.26816"
-          scale="0.1 0.1 0.1"
-          item-type="trash"
-          visible=""
-          rotation=""
-          trash-bin="destroyDelay: 300"
-          physx-body="type: dynamic; mass: 0.5"
-  ><a-ring
-          geometry="radiusInner: 0.4; radiusOuter: 0.5"
-          material="color: #ff6b6b; opacity: 0.3; transparent: true"
-          position="0 0.1 0"
-          rotation="-90 0 0"
-  ></a-ring
-  ><a-ring
-          geometry="radiusInner: 0.4; radiusOuter: 0.5"
-          material="color: #ff6b6b; opacity: 0.3; transparent: true"
-          position="0 0.1 0"
-          rotation="-90 0 0"
-  ></a-ring
-  ></a-entity>
-
-  <a-entity
-          class="interactable"
-          gltf-model="assets/spatula.glb"
-          id="spatula"
-          position="-0.42 0.95 -0.92"
-          scale="0.4 0.4 0.4"
-          rotation="0 270 0"
-          stackable=""
-          item-type="spatula"
-          physx-body="type: dynamic; mass: 0.15"
-  ></a-entity>
-
-  <a-entity id="cameraRig">
-    <a-camera
-            id="camera"
-            look-controls=""
-            wasd-controls=""
-            camera=""
-            rotation="-21.199438419840472 -55.46231456866367 0"
-            data-aframe-inspector-original-camera=""
-    >
-      <a-entity
-              cursor="rayOrigin: mouse"
-              raycaster="objects: .interactable; direction: 0.47119172506148044 0.2688851744103847 -0.8400470946416536; origin: 0 1.6 2; useWorldCoordinates: true; showLine: true"
-              grab-controller=""
-              line="end: 678.0207688609818 -716.3979369870574 154.3445194158143; start: 0 1.6 2; color: white"
-      ></a-entity>
-    </a-camera>
-
-    <a-entity
-            id="leftHand"
-            oculus-touch-controls="hand: left; model: false"
-            raycaster="objects: .interactable; showLine: true"
-            grab-controller=""
-            line="end: 0 0 -1000; color: white"
-    >
-      <a-entity
-              gltf-model="#hand-model"
-              scale="0.003 0.003 -0.003"
-              rotation="230 -100 35"
-              position="0 0 0"
-      ></a-entity>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Room - Quest 3</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene webxr="referenceSpaceType: local-floor;">
       <a-box
-              position="0 0 0"
-              rotation="0 -40 20"
-              width="0.08"
-              height="0.02"
-              depth="0.25"
-              color="#F00"
-              visible="false"
-              physx-body="type: kinematic"
+        position="0 1.5 -2"
+        rotation="0 45 0"
+        color="#4CC3D9"
+        scale="0.5 0.5 0.5"
+        animation="property: rotation; to: 0 405 0; loop: true; dur: 10000; easing: linear"
       ></a-box>
-    </a-entity>
-    <a-entity
-            id="rightHand"
-            oculus-touch-controls="hand: right; model: false"
-            raycaster="objects: .interactable; showLine: true"
-            grab-controller=""
-            line="end: 0 0 -1000; color: white"
-    >
+
+      <a-sphere position="-1 1.5 -2" radius="0.25" color="#EF2D5E"></a-sphere>
+
       <a-entity
-              gltf-model="#hand-model"
-              scale="0.003 0.003 0.003"
-              rotation="-230 -100 35"
-              position="0 0 0"
+        camera
+        look-controls
+        wasd-controls="enabled: false"
+        position="0 1.6 0"
       ></a-entity>
-      <a-box
-              position="0 0 0"
-              rotation="0 20 -20"
-              width="0.08"
-              height="0.02"
-              depth="0.25"
-              color="#F00"
-              visible="false"
-              physx-body="type: kinematic"
-      ></a-box>
-    </a-entity>
-  </a-entity>
-  <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
-</a-scene>
-</body>
+      <a-entity
+        id="leftHand"
+        laser-controls="hand: left"
+        raycaster="objects: .clickable"
+      ></a-entity>
+      <a-entity
+        id="rightHand"
+        laser-controls="hand: right"
+        raycaster="objects: .clickable"
+      ></a-entity>
+    </a-scene>
+
+    <button
+      id="ar-button"
+      style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 30px;
+        font-size: 18px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        z-index: 1000;
+      "
+    >
+      AR
+    </button>
+
+    <a
+      href="anchors-hit/index.html"
+      style="
+        background: red;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        position: fixed;
+        bottom: 60px;
+        right: 20px;
+        z-index: 1000;
+      "
+    >
+      NEW TRY
+    </a>
+
+    <script>
+      const arButton = document.getElementById("ar-button");
+      const sceneEl = document.querySelector("a-scene");
+
+      arButton.addEventListener("click", async () => {
+        if (!navigator.xr) return;
+
+        const session = await navigator.xr.requestSession("immersive-ar", {
+          requiredFeatures: ["local-floor"],
+          optionalFeatures: ["hand-tracking", "hit-test"],
+        });
+
+        sceneEl.renderer.xr.setSession(session);
+      });
+    </script>
+  </body>
 </html>

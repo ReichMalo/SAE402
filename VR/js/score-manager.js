@@ -1,5 +1,8 @@
 /* VR/js/score-manager.js */
 
+// Flag global pour éviter les doublons
+window.ScoreboardCreated = false;
+
 AFRAME.registerComponent('score-manager', {
     schema: {
         totalScore: { type: 'number', default: 0 }
@@ -13,8 +16,11 @@ AFRAME.registerComponent('score-manager', {
         this.displayedScore = 0;
         this.targetScore = 0;
 
-        // Création du visuel
-        this.createGlobalScoreboard();
+        // Création du visuel (une seule fois globalement)
+        if (!window.ScoreboardCreated) {
+            this.createGlobalScoreboard();
+            window.ScoreboardCreated = true;
+        }
 
         // Démarrer la boucle d'animation du score
         this.startScoreAnimationLoop();
@@ -23,8 +29,12 @@ AFRAME.registerComponent('score-manager', {
     createGlobalScoreboard: function() {
         const scene = this.el.sceneEl;
 
+        // Vérifier si le panneau existe déjà
+        if (document.getElementById('global-scoreboard')) return;
+
         // 1. Conteneur principal (placé haut sur le mur du fond)
         const container = document.createElement('a-entity');
+        container.id = 'global-scoreboard';
         container.setAttribute('position', '0 3.5 -4');
         container.setAttribute('rotation', '10 0 0'); // Légèrement incliné vers le bas
         scene.appendChild(container);
@@ -58,6 +68,7 @@ AFRAME.registerComponent('score-manager', {
 
         // 5. Le Score (Grand et Lumineux)
         this.scoreTextElement = document.createElement('a-text');
+        this.scoreTextElement.id = 'score-display';
         this.scoreTextElement.setAttribute('value', '0000');
         this.scoreTextElement.setAttribute('align', 'center');
         this.scoreTextElement.setAttribute('position', '0 -0.1 0.06');
@@ -65,6 +76,9 @@ AFRAME.registerComponent('score-manager', {
         this.scoreTextElement.setAttribute('color', '#f1c40f'); // Or / Jaune
         this.scoreTextElement.setAttribute('font', 'mozillavr');
         container.appendChild(this.scoreTextElement);
+        
+        // Stocker la référence globalement pour les mises à jour
+        window.ScoreDisplayElement = this.scoreTextElement;
     },
 
     startScoreAnimationLoop: function() {
@@ -82,10 +96,11 @@ AFRAME.registerComponent('score-manager', {
     },
 
     updateDisplay: function() {
-        if (this.scoreTextElement) {
+        const scoreEl = window.ScoreDisplayElement || this.scoreTextElement;
+        if (scoreEl) {
             // Formatage "0000" (ex: 50 devient "0050")
             const formatted = this.displayedScore.toString().padStart(4, '0');
-            this.scoreTextElement.setAttribute('value', formatted);
+            scoreEl.setAttribute('value', formatted);
         }
     },
 

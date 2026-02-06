@@ -29,8 +29,8 @@ try:
     
     local_ip = get_local_ip()
     print(f'Server running on https://0.0.0.0:8443')
-    print(f'Access from this computer: https://localhost:8443/CANNON/')
-    print(f'Access from Quest 3 (on same network): https://{local_ip}:8443/CANNON/')
+    print(f'Access from this computer: https://localhost:8443/VR/')
+    print(f'Access from Quest 3 (on same network): https://{local_ip}:8443/VR/')
     print('Press Ctrl+C to stop')
     httpd.serve_forever()
 except FileNotFoundError:
