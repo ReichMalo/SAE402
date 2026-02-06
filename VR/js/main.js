@@ -14,6 +14,7 @@ async function initializeApp() {
       loadScript("js/grab-controller.js"),
       loadScript("js/infinite-supply.js"),
       loadScript("js/trash-bin.js"),
+      loadScript("js/setWorldCollision.js"),
     ]);
   } catch (error) {
     console.error("Error loading components:", error);

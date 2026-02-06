@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@d5f3f8/dist/aframe-extras.min.js"></script>
     <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/dist/physx.min.js"></script>
+    <script src="https://unpkg.com/delaunator@5.0.0/delaunator.min.js"></script>
 
     <script src="js/main.js"></script>
   </head>
@@ -24,6 +25,7 @@
 
     <a-scene
       xr-mode-ui="enabled: false"
+      room-collision="showDebug: true; opacity: 0.3"
       inspector=""
       keyboard-shortcuts=""
       screenshot=""
@@ -195,7 +197,7 @@
         item-type="bun"
         infinite-supply=""
         data-is-original="true"
-        physx-body="type: dynamic; mass: 0.2"
+        physx-body="type: static"
       ></a-entity>
 
       <a-entity
