@@ -13,14 +13,11 @@
   </head>
   <body>
     <a-scene
-      xr-mode-ui="enterARButton: #enter-xr-button; XRMode: xr"
+      xr-mode-ui="XRMode: xr"
       inspector=""
       keyboard-shortcuts=""
       screenshot=""
       device-orientation-permission-ui=""
-      webxr="referenceSpaceType: local-floor; requiredFeatures: local-floor; optionalFeatures: hit-test;"
-      hit-test-cursor="cursor: #hit-test-cursor; ring: #placement-ring"
-      zone-tool="root: #ar-placement; cursor: #hit-test-cursor"
       physx="autoLoad: true; delay: 0; gravity: 0 -9.8 0; wasmUrl: https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/wasm/physx.release.wasm"
     >
         <a-asset-item
@@ -92,7 +89,7 @@
         color="#444"
         material=""
         geometry="height: 0.11; depth: 1.05"
-        visible="false"
+        
         physx-body="type: static"
       ></a-box>
       <a-box
@@ -106,7 +103,7 @@
         geometry="height: 0.11; depth: 1.06"
         rotation="0.02 -90 0.07"
         scale="0.5 1 0.8"
-        visible="false"
+        
         physx-body="type: static"
       ></a-box>
       <a-box
@@ -120,7 +117,7 @@
         geometry="height: 0.11; depth: 1.06"
         rotation="0.02 -90 0.07"
         scale="0.5 1 0.8"
-        visible="false"
+        
         physx-body="type: static"
       ></a-box>
 
@@ -133,7 +130,7 @@
         color="#222"
         material=""
         geometry=""
-        visible="false"
+        
         physx-body="type: static"
       ></a-box>
 
@@ -147,7 +144,7 @@
         stackable=""
         item-type="pan"
         sound="src: #sizzle-sound; on: start-cooking; poolSize: 5"
-        visible="false"
+        
         physx-body="type: dynamic; mass: 0.5"
       ></a-entity>
 
@@ -162,7 +159,7 @@
         infinite-supply=""
         data-is-original="true"
         data-physx-mass="0.3"
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -178,7 +175,7 @@
         data-is-original="true"
         data-physx-mass="0.2"
         rotation=""
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -194,7 +191,7 @@
         data-is-original="true"
         data-physx-mass="0.2"
         rotation=""
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -209,7 +206,7 @@
         infinite-supply=""
         data-is-original="true"
         data-physx-mass="0.3"
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -224,7 +221,7 @@
         infinite-supply=""
         data-is-original="true"
         data-physx-mass="0.15"
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -239,7 +236,7 @@
         infinite-supply=""
         data-is-original="true"
         data-physx-mass="0.1"
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -255,7 +252,7 @@
         infinite-supply=""
         data-is-original="true"
         data-physx-mass="0.1"
-        visible="false"
+        
         physx-body="type: static"
       ></a-entity>
 
@@ -267,7 +264,7 @@
         scale="0.5 0.5 0.5"
         stackable=""
         item-type="ketchup"
-        visible="false"
+        
         physx-body="type: dynamic; mass: 0.2"
       ></a-entity>
 
@@ -279,7 +276,7 @@
         scale="0.5 0.5 0.5"
         stackable=""
         item-type="mustard"
-        visible="false"
+        
         physx-body="type: dynamic; mass: 0.2"
       ></a-entity>
 
@@ -289,7 +286,7 @@
         position="1.00147 0.6 1.26816"
         scale="0.1 0.1 0.1"
         item-type="trash"
-        visible="false"
+        
         rotation=""
         trash-bin="destroyDelay: 300"
         physx-body="type: dynamic; mass: 0.5"
@@ -316,7 +313,7 @@
         rotation="0 270 0"
         stackable=""
         item-type="spatula"
-        visible="false"
+        
         physx-body="type: dynamic; mass: 0.15"
       ></a-entity>
 
@@ -340,7 +337,7 @@
           oculus-touch-controls="hand: left; model: false"
           raycaster="objects: .interactable; showLine: false; far: 0.15"
           grab-controller=""
-          visible="false"
+          
         >
           <a-entity
             gltf-model="#hand-model"
@@ -355,7 +352,7 @@
             height="0.02"
             depth="0.25"
             color="#F00"
-            visible="false"
+            
             physx-body="type: kinematic"
           ></a-box>
         </a-entity>
@@ -364,7 +361,7 @@
           oculus-touch-controls="hand: right; model: false"
           raycaster="objects: .interactable; showLine: false; far: 0.15"
           grab-controller=""
-          visible="false"
+          
         >
           <a-entity
             gltf-model="#hand-model"
@@ -379,7 +376,7 @@
             height="0.02"
             depth="0.25"
             color="#F00"
-            visible="false"
+            
             physx-body="type: kinematic"
           ></a-box>
         </a-entity>
@@ -388,29 +385,7 @@
       <a-entity score-manager=""></a-entity>
       <a-entity order-manager="interval: 18000; maxOrders: 2"></a-entity>
 
-      <!-- AR Placement Elements -->
-      <a-entity id="ar-placement" visible="true"></a-entity>
-
-      <a-entity id="hit-test-cursor" visible="false">
-        <a-sphere radius="0.02" color="#00AAFF" position="0 0 0"></a-sphere>
-        <a-ring
-          id="placement-ring"
-          color="#00FF7F"
-          radius-inner="0.08"
-          radius-outer="0.12"
-          rotation="-90 0 0"
-          position="0 0 0"
-        ></a-ring>
-      </a-entity>
-
       <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
     </a-scene>
-
-  <!-- AR Control UI -->
-  <button id="enter-xr-button">Enter XR</button>
-
-  <div id="status">Sélectionnez les points</div>
-
-  <button id="reset-zone-button" style="display: none;">Reset Zone</button>
   </body>
 </html>
