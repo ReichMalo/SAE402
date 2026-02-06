@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/dist/physx.min.js"></script>
 
     <script src="js/main.js"></script>
+    <script src="js/make-burger.js"></script>
   </head>
   <body>
     <a-scene
@@ -54,14 +55,6 @@
         <a-asset-item
           id="model-plate"
           src="./public/assets/Plate.glb"
-        ></a-asset-item>
-        <a-asset-item
-          id="model-ketchup"
-          src="./public/assets/ketchup.glb"
-        ></a-asset-item>
-        <a-asset-item
-          id="model-mustard"
-          src="./public/assets/mustard.glb"
         ></a-asset-item>
         <a-asset-item
           id="model-trash"
@@ -157,10 +150,10 @@
         data-is-original="true"
         data-physx-mass="0.3"
         physx-body="type: static"
+        plate-target
       ></a-entity>
-
       <a-entity
-        id="bun-top"
+        id="bunTop"
         class="interactable"
         gltf-model="#model-bun-top"
         position="0.88 0.86 -1.15"
@@ -178,7 +171,8 @@
       <a-entity
         id="bun-bottom"
         class="interactable"
-        gltf-model="#model-bun-bottom"
+        id="bunBottom"
+        gltf-model="./public/assets/bunBottom.glb"
         position="1.19 0.86 -1.15"
         scale="0.3 0.3 0.3"
         stackable=""
@@ -248,29 +242,7 @@
       ></a-entity>
 
       <a-entity
-        class="interactable"
-        gltf-model="#model-ketchup"
-        id="ketchup"
-        position="1.25 0.85 0.08"
-        scale="0.5 0.5 0.5"
-        stackable=""
-        item-type="ketchup"
-        physx-body="type: dynamic; mass: 0.2"
-      ></a-entity>
-
-      <a-entity
-        class="interactable"
-        gltf-model="#model-mustard"
-        id="mustard"
-        position="1.25 0.85 -0.05"
-        scale="0.5 0.5 0.5"
-        stackable=""
-        item-type="mustard"
-        physx-body="type: dynamic; mass: 0.2"
-      ></a-entity>
-
-      <a-entity
-        gltf-model="#model-trash"
+        gltf-model="./public/assets/trash.glb"
         id="trash"
         position="1.00147 0.6 1.26816"
         scale="0.1 0.1 0.1"
@@ -314,17 +286,20 @@
           rotation="-21.199438419840472 -55.46231456866367 0"
           data-aframe-inspector-original-camera=""
         >
+          <a-entity xr-debug-hud></a-entity>
+
           <a-entity
             cursor="rayOrigin: mouse"
-            raycaster="objects: .interactable; direction: 0.47119172506148044 0.2688851744103847 -0.8400470946416536; origin: 0 1.6 2; useWorldCoordinates: true; showLine: false"
+            raycaster="objects: .interactable, .clickable; showLine: false; far: 0.2"
             grab-controller=""
           ></a-entity>
         </a-camera>
         <a-entity
           id="leftHand"
           oculus-touch-controls="hand: left; model: false"
-          raycaster="objects: .interactable; showLine: false; far: 0.15"
+          raycaster="objects: .interactable, .clickable; showLine: false; far: 0.2"
           grab-controller=""
+          rayclick-on-buttons
         >
           <a-entity
             gltf-model="#hand-model"
@@ -346,8 +321,9 @@
         <a-entity
           id="rightHand"
           oculus-touch-controls="hand: right; model: false"
-          raycaster="objects: .interactable; showLine: false; far: 0.15"
+          raycaster="objects: .interactable, .clickable; showLine: false; far: 0.2"
           grab-controller=""
+          rayclick-on-buttons
         >
           <a-entity
             gltf-model="#hand-model"
