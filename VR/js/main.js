@@ -14,7 +14,11 @@ async function initializeApp() {
       loadScript("js/grab-controller.js"),
       loadScript("js/infinite-supply.js"),
       loadScript("js/trash-bin.js"),
+      loadScript("js/game-manager.js"),
+      loadScript("js/score-manager.js")
     ]);
+
+    console.log("Application fully initialized.");
   } catch (error) {
     console.error("Error loading components:", error);
   }
@@ -23,5 +27,5 @@ async function initializeApp() {
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initializeApp);
 } else {
-  initializeApp();
+    initializeApp();
 }

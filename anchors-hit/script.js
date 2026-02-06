@@ -1,334 +1,295 @@
+/* anchors-hit/script.js */
+
+// --- 1. Composant de Visée (Gestion couleurs et validité) ---
 AFRAME.registerComponent("hit-test-cursor", {
-  schema: {
-    cursor: { type: "selector" }, // #cursor
-    ring: { type: "selector" }, // #cursorRing
-  },
+    schema: {
+        cursor: { type: "selector" },
+        ring: { type: "selector" },
+    },
+    init: function () {
+        this.sceneEl = this.el;
+        this.cursorEl = this.data.cursor;
+        this.ringEl = this.data.ring;
 
-  init: function () {
-    this.sceneEl = this.el;
-    this.cursorEl = this.data.cursor;
-    this.ringEl = this.data.ring;
+        this.hitTestSource = null;
+        this.refSpace = null;
+        this.isValidPosition = false;
+        this.currentError = "";
 
-    this.session = null;
-    this.refSpace = null;
-    this.viewerSpace = null;
-    this.hitTestSource = null;
+        // --- REGLAGES ---
+        this.MAX_DISTANCE = 10.0;   // AUGMENTÉ : Vous pouvez viser jusqu'à 10m
+        this.MAX_HEIGHT = 1.5;      // Hauteur max (2m30)
+        this.MIN_POINT_DIST = 0.8;  // AUGMENTÉ : Interdit de poser à moins de 80cm d'un autre point
 
-    this.onEnterVR = this.onEnterVR.bind(this);
-    this.onExitVR = this.onExitVR.bind(this);
-    this.onXRFrame = this.onXRFrame.bind(this);
+        // Seuil de platitude (0.6 = accepte un peu de pente, mais refuse les murs droits)
+        this.FLAT_THRESHOLD = 0.6;
 
-    this.sceneEl.addEventListener("enter-vr", this.onEnterVR);
-    this.sceneEl.addEventListener("exit-vr", this.onExitVR);
+        this.onEnterVR = this.onEnterVR.bind(this);
+        this.onXRFrame = this.onXRFrame.bind(this);
+        this.sceneEl.addEventListener("enter-vr", this.onEnterVR);
+    },
 
-    if (this.cursorEl) this.cursorEl.setAttribute("visible", "false");
-  },
+    onEnterVR: function () {
+        const session = this.sceneEl.renderer.xr.getSession();
+        if (!session) return;
 
-  remove: function () {
-    this.sceneEl.removeEventListener("enter-vr", this.onEnterVR);
-    this.sceneEl.removeEventListener("exit-vr", this.onExitVR);
-  },
+        session.requestReferenceSpace("viewer").then((vs) => {
+            this.viewerSpace = vs;
+            session.requestReferenceSpace("local-floor").then((rs) => {
+                this.refSpace = rs;
+                session.requestHitTestSource({ space: this.viewerSpace }).then((src) => {
+                    this.hitTestSource = src;
+                    session.requestAnimationFrame(this.onXRFrame);
+                });
+            });
+        });
+    },
 
-  onEnterVR: function () {
-    var session = this.sceneEl.renderer.xr.getSession();
-    if (!session) return;
+    onXRFrame: function (time, frame) {
+        const session = frame.session;
+        session.requestAnimationFrame(this.onXRFrame);
 
-    this.session = session;
+        if (!this.hitTestSource || !this.refSpace) return;
 
-    var self = this;
+        // Cacher le curseur si terminé
+        const zoneTool = this.sceneEl.components["zone-tool"];
+        if (zoneTool && zoneTool.isZoneCreated) {
+            this.cursorEl.setAttribute("visible", "false");
+            return;
+        }
 
-    session.requestReferenceSpace("viewer").then(function (vs) {
-      self.viewerSpace = vs;
+        const results = frame.getHitTestResults(this.hitTestSource);
+        if (results.length > 0) {
+            const pose = results[0].getPose(this.refSpace);
+            const pos = pose.transform.position;
+            const rot = pose.transform.orientation;
 
-      session.requestReferenceSpace("local-floor").then(function (rs) {
-        self.refSpace = rs;
+            this.cursorEl.setAttribute("visible", "true");
+            this.cursorEl.object3D.position.copy(pos);
 
-        session
-          .requestHitTestSource({ space: self.viewerSpace })
-          .then(function (src) {
-            self.hitTestSource = src;
-            if (self.cursorEl) self.cursorEl.setAttribute("visible", "false");
-            session.requestAnimationFrame(self.onXRFrame);
-          });
-      });
-    });
-  },
+            // --- VÉRIFICATIONS ---
+            let error = "";
 
-  onExitVR: function () {
-    if (this.hitTestSource) {
-      this.hitTestSource.cancel();
-      this.hitTestSource = null;
-    }
+            // Convertir la position en THREE.Vector3 pour les calculs de distance
+            const posVec3 = new THREE.Vector3(pos.x, pos.y, pos.z);
 
-    this.session = null;
-    this.refSpace = null;
-    this.viewerSpace = null;
+            // 1. Distance Joueur (Vous vouliez pouvoir aller loin)
+            const camera = this.sceneEl.camera;
+            if (camera && camera.position.distanceTo(posVec3) > this.MAX_DISTANCE) {
+                error = "Trop loin (Max 10m)";
+            }
 
-    if (this.cursorEl) this.cursorEl.setAttribute("visible", "false");
-  },
+            // 2. Hauteur
+            if (pos.y > this.MAX_HEIGHT) {
+                error = "Trop haut";
+            }
 
-  onXRFrame: function (time, frame) {
-    frame.session.requestAnimationFrame(this.onXRFrame);
+            // 3. Mur / Pente (Anti-Mur)
+            const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
+            const normal = new THREE.Vector3(0, 1, 0).applyQuaternion(quat);
 
-    if (!this.hitTestSource) return;
-    if (!this.refSpace) return;
-    if (!this.cursorEl) return;
+            if (normal.y < this.FLAT_THRESHOLD) {
+                error = "Impossible sur un mur";
+            }
 
-    // Перевіряємо чи зона вже створена
-    var zoneTool = this.sceneEl.components["zone-tool"];
-    if (zoneTool && zoneTool.polyEl) {
-      // Зона створена - курсор не показуємо
-      this.cursorEl.setAttribute("visible", "false");
-      return;
-    }
+            // 4. Proximité (Vous ne vouliez pas que ce soit trop proche)
+            if (zoneTool && zoneTool.points.length > 0) {
+                for (let i = 0; i < zoneTool.points.length; i++) {
+                    if (posVec3.distanceTo(zoneTool.points[i]) < this.MIN_POINT_DIST) {
+                        error = "Trop près d'un autre point !";
+                        break;
+                    }
+                }
+            }
 
-    var results = frame.getHitTestResults(this.hitTestSource);
-    if (!results || results.length === 0) {
-      this.cursorEl.setAttribute("visible", "false");
-      return;
-    }
+            // --- RÉSULTAT ---
+            this.currentError = error;
+            if (error === "") {
+                this.isValidPosition = true;
+                if (this.ringEl) this.ringEl.setAttribute("color", "#00FF7F"); // VERT
+            } else {
+                this.isValidPosition = false;
+                if (this.ringEl) this.ringEl.setAttribute("color", "#FF0000"); // ROUGE
+            }
 
-    var pose = results[0].getPose(this.refSpace);
-    if (!pose) {
-      this.cursorEl.setAttribute("visible", "false");
-      return;
-    }
+            // Garder le cercle à plat
+            if (this.ringEl) this.ringEl.object3D.rotation.set(-Math.PI / 2, 0, 0);
 
-    var p = pose.transform.position;
-
-    this.cursorEl.setAttribute("visible", "true");
-    this.cursorEl.object3D.position.set(p.x, p.y, p.z);
-
-    // Keep ring horizontal (floor)
-    if (this.ringEl) {
-      this.ringEl.setAttribute("rotation", "-90 0 0");
-    }
-  },
+        } else {
+            this.cursorEl.setAttribute("visible", "false");
+            this.isValidPosition = false;
+        }
+    },
 });
 
-/* -----------------------------------------
-  Zone tool: 4 points -> oriented rectangle
------------------------------------------- */
+// --- 2. Composant Zone & Cuisine ---
 AFRAME.registerComponent("zone-tool", {
-  schema: {
-    root: { type: "selector" }, // #anchor-root
-    cursor: { type: "selector" }, // #cursor
-    min: { type: "int", default: 4 },
-    max: { type: "int", default: 4 },
-  },
+    schema: {
+        root: { type: "selector" },
+        cursor: { type: "selector" },
+    },
 
-  init: function () {
-    this.sceneEl = this.el;
-    this.rootEl = this.data.root;
-    this.cursorEl = this.data.cursor;
+    init: function () {
+        this.points = [];
+        this.markers = [];
+        this.isZoneCreated = false;
 
-    this.session = null;
+        this.onSelect = this.onSelect.bind(this);
+        this.resetZone = this.resetZone.bind(this);
 
-    this.points = []; // THREE.Vector3
-    this.markers = []; // a-sphere
-    this.planeEl = null;
+        this.el.sceneEl.addEventListener("enter-vr", () => {
+            const session = this.el.sceneEl.renderer.xr.getSession();
+            if (session) session.addEventListener("select", this.onSelect);
+        });
 
-    this.polyEl = null; // a-entity with custom mesh
+        const resetBtn = document.getElementById("reset-zone-button");
+        if (resetBtn) resetBtn.addEventListener("click", this.resetZone);
+        this.statusEl = document.getElementById("status");
+    },
 
-    this.onEnterVR = this.onEnterVR.bind(this);
-    this.onExitVR = this.onExitVR.bind(this);
-    this.onSelect = this.onSelect.bind(this);
-    this.onSqueeze = this.onSqueeze.bind(this);
+    onSelect: function () {
+        if (this.isZoneCreated || !this.data.cursor.getAttribute("visible")) return;
 
-    this.sceneEl.addEventListener("enter-vr", this.onEnterVR);
-    this.sceneEl.addEventListener("exit-vr", this.onExitVR);
+        // Vérifier validité
+        const cursorComp = this.el.sceneEl.components["hit-test-cursor"];
+        if (cursorComp && !cursorComp.isValidPosition) {
+            if (cursorComp.currentError) {
+                this.setStatus("❌ " + cursorComp.currentError);
+            }
+            return;
+        }
 
-    // Buttons
-    this.resetBtn = document.getElementById("reset-zone-button");
-    this.finishBtn = document.getElementById("finish-zone-button");
-    this.statusEl = document.getElementById("status");
+        const pos = new THREE.Vector3();
+        this.data.cursor.object3D.getWorldPosition(pos);
 
-    if (this.resetBtn) {
-      this.resetBtn.addEventListener("click", () => this.resetZone());
+        this.points.push(pos.clone());
+        this.addMarker(pos);
+
+        if (this.points.length === 4) {
+            this.createKitchen();
+        } else {
+            this.setStatus(`Point ${this.points.length}/4 validé.`);
+        }
+    },
+
+    addMarker: function (pos) {
+        const m = document.createElement("a-sphere");
+        m.setAttribute("radius", "0.03");
+        m.setAttribute("color", "#00AAFF");
+        m.setAttribute("position", pos);
+        this.data.root.appendChild(m);
+        this.markers.push(m);
+    },
+
+    createKitchen: function () {
+        this.isZoneCreated = true;
+        this.setStatus("Construction...");
+        document.getElementById("reset-zone-button").style.display = "block";
+
+        // 1. Calculs
+        const center = new THREE.Vector3().addVectors(this.points[0], this.points[2]).multiplyScalar(0.5);
+        const width = this.points[0].distanceTo(this.points[1]);
+        const depth = this.points[1].distanceTo(this.points[2]);
+        const vX = new THREE.Vector3().subVectors(this.points[1], this.points[0]).normalize();
+        const angle = Math.atan2(vX.z, vX.x);
+
+        // 2. Structure
+        this.kitchenEntity = document.createElement("a-entity");
+        this.kitchenEntity.object3D.position.copy(center);
+        this.kitchenEntity.object3D.rotation.y = -angle;
+
+        // 3. Table Solide
+        const table = document.createElement("a-box");
+        table.setAttribute("width", width);
+        table.setAttribute("height", "0.05");
+        table.setAttribute("depth", depth);
+        table.setAttribute("position", "0 -0.025 0");
+        table.setAttribute("color", "#444");
+        table.setAttribute("opacity", "1");
+        table.setAttribute("physx-body", "type: static");
+        this.kitchenEntity.appendChild(table);
+
+        this.data.root.appendChild(this.kitchenEntity);
+
+        // 4. Objets
+        setTimeout(() => {
+            this.spawnItems(this.kitchenEntity, width, depth);
+            this.setStatus("Cuisine prête !");
+        }, 200);
+
+        // Nettoyage
+        this.markers.forEach(m => m.parent.removeChild(m));
+        this.markers = [];
+    },
+
+    spawnItems: function (parent, w, d) {
+        const y = 0.3;
+
+        const html = `
+      <a-entity id="frying-pan" class="interactable" gltf-model="#model-pan" 
+        position="${-w*0.3} ${y} 0" scale="0.2 0.2 0.2" 
+        physx-body="type: dynamic; mass: 2" item-type="pan"
+        sound="src: #sizzle-sound; on: start-cooking; poolSize: 5">
+      </a-entity>
+
+      <a-entity class="interactable" gltf-model="#model-spatula" 
+        position="${-w*0.4} ${y} 0.15" scale="0.4 0.4 0.4" rotation="0 90 0"
+        physx-body="type: dynamic; mass: 0.5" item-type="spatula">
+      </a-entity>
+
+      <a-entity class="interactable" gltf-model="#model-bun-bottom"
+        position="${-w*0.15} ${y} ${-d*0.2}" scale="0.3 0.3 0.3"
+        physx-body="type: dynamic; mass: 0.5" item-type="bun" infinite-supply data-is-original="true">
+      </a-entity>
+      
+      <a-entity class="interactable" gltf-model="#model-patty"
+        position="0 ${y} ${-d*0.2}" scale="0.6 0.6 0.6"
+        physx-body="type: dynamic; mass: 0.5" item-type="patty" infinite-supply data-is-original="true">
+      </a-entity>
+
+      <a-entity class="interactable" gltf-model="#model-cheese"
+        position="${w*0.15} ${y} ${-d*0.2}" scale="0.6 0.6 0.6"
+        physx-body="type: dynamic; mass: 0.5" item-type="cheese" infinite-supply data-is-original="true">
+      </a-entity>
+      
+      <a-entity class="interactable" gltf-model="#model-bun-top"
+        position="${w*0.3} ${y} ${-d*0.2}" scale="0.3 0.3 0.3"
+        physx-body="type: dynamic; mass: 0.5" item-type="bun" infinite-supply data-is-original="true">
+      </a-entity>
+
+      <a-entity id="serving-plate" class="interactable" gltf-model="#model-plate"
+        position="${w*0.2} ${y} ${d*0.15}" scale="0.4 0.4 0.4"
+        physx-body="type: dynamic; mass: 1" item-type="plate" infinite-supply data-is-original="true">
+      </a-entity>
+      
+      <a-entity class="interactable" gltf-model="#model-ketchup"
+        position="${w*0.4} ${y} 0" scale="0.5 0.5 0.5"
+        physx-body="type: dynamic; mass: 0.5" item-type="ketchup">
+      </a-entity>
+
+      <a-entity gltf-model="#model-trash" 
+        position="${w*0.6} -0.5 0" scale="0.1 0.1 0.1"
+        trash-bin 
+        physx-body="type: static">
+      </a-entity>
+    `;
+
+        parent.insertAdjacentHTML("beforeend", html);
+    },
+
+    setStatus: function (msg) {
+        if (this.statusEl) this.statusEl.textContent = msg;
+    },
+
+    resetZone: function () {
+        if (this.kitchenEntity && this.kitchenEntity.parent) {
+            this.kitchenEntity.parent.removeChild(this.kitchenEntity);
+        }
+        this.markers.forEach(m => { if(m.parent) m.parent.removeChild(m); });
+        this.markers = [];
+        this.points = [];
+        this.isZoneCreated = false;
+        document.getElementById("reset-zone-button").style.display = "none";
+        this.setStatus("Placez 4 points pour la table.");
     }
-    this.resetZone();
-  },
-
-  remove: function () {
-    this.sceneEl.removeEventListener("enter-vr", this.onEnterVR);
-    this.sceneEl.removeEventListener("exit-vr", this.onExitVR);
-
-    if (this.session) {
-      this.session.removeEventListener("select", this.onSelect);
-    }
-  },
-
-  onEnterVR: function () {
-    if (this.sceneEl.is("ar-mode") === false) return;
-
-    const session = this.sceneEl.renderer?.xr?.getSession();
-    if (!session) return;
-
-    this.session = session;
-    session.addEventListener("select", this.onSelect);
-    session.addEventListener("squeeze", this.onSqueeze);
-
-    this.setStatus("AR started. Place points with trigger.");
-  },
-
-  onExitVR: function () {
-    if (this.session) {
-      this.session.removeEventListener("select", this.onSelect);
-      this.session.removeEventListener("squeeze", this.onSqueeze);
-    }
-    this.session = null;
-    this.resetZone();
-    this.setStatus("Exited AR.");
-  },
-
-  onSelect: function () {
-    if (!this.cursorEl) return;
-
-    // якщо вже 4 точки — більше не додаємо
-    if (this.points.length >= this.data.max) {
-      this.setStatus(
-        `Zone already created (${this.data.max} points). Press Grip button to Reset.`,
-      );
-      return;
-    }
-
-    const p = this.cursorEl.object3D.position;
-    const v = new THREE.Vector3(p.x, p.y, p.z);
-
-    this.points.push(v);
-    this.addMarker(v);
-
-    const needed = this.data.min; // тут це 4
-
-    // якщо точок < 4 — просто підказка
-    if (this.points.length < needed) {
-      this.setStatus(
-        `Point ${this.points.length}/4 added. Place ${needed - this.points.length} more.`,
-      );
-      return;
-    }
-
-    // ✅ якщо це 4-та точка — будуємо полігон автоматично
-    this.setStatus("Point 4/4 added. Creating zone...");
-    this.buildPolygon();
-  },
-
-  onSqueeze: function () {
-    // Grip button - reset zone
-    this.resetZone();
-    this.setStatus("Zone reset. Place 4 new points.");
-  },
-
-  addMarker: function (v) {
-    if (!this.rootEl) return;
-
-    const m = document.createElement("a-sphere");
-    m.setAttribute("radius", "0.03");
-    m.setAttribute("color", "#00c8ff");
-    m.setAttribute("position", `${v.x} ${v.y + 0.01} ${v.z}`);
-
-    this.rootEl.appendChild(m);
-    this.markers.push(m);
-  },
-
-  removeMarkers: function () {
-    if (!this.rootEl) return;
-    for (const m of this.markers) this.rootEl.removeChild(m);
-    this.markers = [];
-  },
-
-  removePolygon: function () {
-    if (!this.rootEl) return;
-    if (!this.polyEl) return;
-
-    // remove three.js mesh safely
-    this.polyEl.removeObject3D("mesh");
-    this.rootEl.removeChild(this.polyEl);
-    this.polyEl = null;
-  },
-
-  hideCursor: function () {
-    if (!this.cursorEl) return;
-    this.cursorEl.setAttribute("visible", "false");
-  },
-
-  showCursor: function () {
-    if (!this.cursorEl) return;
-    this.cursorEl.setAttribute("visible", "true");
-  },
-
-  resetZone: function () {
-    this.points = [];
-    this.removeMarkers();
-    this.removePolygon();
-    this.showCursor();
-    this.setStatus("Reset. Tap to place new points.");
-  },
-
-  buildPolygon: function () {
-    if (!this.rootEl) return;
-    if (this.points.length !== 4) {
-      this.setStatus(`Need exactly 4 points. Currently: ${this.points.length}`);
-      return;
-    }
-
-    // Replace old polygon if exists
-    this.removePolygon();
-
-    // Create manual geometry for quadrilateral
-    const geom = new THREE.BufferGeometry();
-
-    // 4 точки -> 2 трикутники (0-1-2, 0-2-3)
-    const vertices = new Float32Array([
-      // Трикутник 1: точки 0, 1, 2
-      this.points[0].x,
-      this.points[0].y,
-      this.points[0].z,
-      this.points[1].x,
-      this.points[1].y,
-      this.points[1].z,
-      this.points[2].x,
-      this.points[2].y,
-      this.points[2].z,
-
-      // Трикутник 2: точки 0, 2, 3
-      this.points[0].x,
-      this.points[0].y,
-      this.points[0].z,
-      this.points[2].x,
-      this.points[2].y,
-      this.points[2].z,
-      this.points[3].x,
-      this.points[3].y,
-      this.points[3].z,
-    ]);
-
-    geom.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
-    geom.computeVertexNormals();
-
-    // Material (напівпрозора сіра)
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0x808080,
-      transparent: true,
-      opacity: 0.8,
-      side: THREE.DoubleSide,
-    });
-
-    const mesh = new THREE.Mesh(geom, mat);
-
-    const e = document.createElement("a-entity");
-    e.setObject3D("mesh", mesh);
-
-    this.rootEl.appendChild(e);
-    this.polyEl = e;
-
-    // Приховуємо курсор після створення зони
-    this.hideCursor();
-
-    this.setStatus(`Zone created with 4 points. Press Grip to reset zone.`);
-  },
-
-  setStatus: function (msg) {
-    if (this.statusEl) this.statusEl.textContent = msg;
-  },
 });

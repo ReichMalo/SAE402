@@ -3,7 +3,6 @@
   <head>
     <meta charset="utf-8" />
     <title>XR Burger Workshop</title>
-    <link rel="stylesheet" href="./public/styles.css" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@d5f3f8/dist/aframe-extras.min.js"></script>
     <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>
@@ -13,26 +12,14 @@
     <script src="js/make-burger.js"></script>
   </head>
   <body>
-    <section id="menu">
-      <h1 class="title">Meal Maker XR</h1>
-      <p class="desc">
-        Ready to create delicious burgers in AR? Let's get started!
-      </p>
-      <div style="display: flex; gap: 1rem; justify-content: center">
-        <button id="btn-ar" class="btn">Start game</button>
-      </div>
-    </section>
-
     <a-scene
-      webxr="requiredFeatures: local-floor; optionalFeatures: hit-test"
-      xr-mode-ui="enabled: false"
+      xr-mode-ui="XRMode: xr"
       inspector=""
       keyboard-shortcuts=""
       screenshot=""
       device-orientation-permission-ui=""
       physx="autoLoad: true; delay: 0; gravity: 0 -9.8 0; wasmUrl: https://cdn.jsdelivr.net/gh/c-frame/physx@v0.3.x/wasm/physx.release.wasm"
     >
-      <a-assets>
         <a-asset-item
           id="model-table"
           src="./public/assets/Table.glb"
@@ -110,8 +97,8 @@
         scale="0.5 1 0.8"
         visible=""
         physx-body="type: static"
-      ></a-box
-      ><a-box
+      ></a-box>
+      <a-box
         id="worktop-3"
         position="1.08 0.8 0.21"
         width="3"
@@ -141,20 +128,20 @@
       <a-entity
         id="frying-pan"
         class="interactable"
-        gltf-model="./public/assets/pan.glb"
+        gltf-model="#model-pan"
         position="-0.01942 0.947 -0.70134"
         scale="0.2 0.2 0.2"
         rotation="0 180 0"
         stackable=""
         item-type="pan"
-        sound="src: ./public/assets/sizzle.mp3; on: start-cooking; poolSize: 5"
+        sound="src: #sizzle-sound; on: start-cooking; poolSize: 5"
         physx-body="type: dynamic; mass: 0.5"
       ></a-entity>
 
       <a-entity
         id="serving-plate"
         class="interactable"
-        gltf-model="./public/assets/plate.glb"
+        gltf-model="#model-plate"
         position="0.95 0.89 0.42"
         scale="0.4 0.4 0.4"
         stackable=""
@@ -168,7 +155,7 @@
       <a-entity
         id="bunTop"
         class="interactable"
-        gltf-model="./public/assets/bunTop.glb"
+        gltf-model="#model-bun-top"
         position="0.88 0.86 -1.15"
         scale="0.3 0.3 0.3"
         stackable=""
@@ -182,6 +169,7 @@
       ></a-entity>
 
       <a-entity
+        id="bun-bottom"
         class="interactable"
         id="bunBottom"
         gltf-model="./public/assets/bunBottom.glb"
@@ -191,13 +179,15 @@
         item-type="bun"
         infinite-supply=""
         data-is-original="true"
-        physx-body="type: dynamic; mass: 0.2"
+        data-physx-mass="0.2"
+        rotation=""
+        physx-body="type: static"
       ></a-entity>
 
       <a-entity
         id="patty"
         class="interactable"
-        gltf-model="./public/assets/patty.glb"
+        gltf-model="#model-patty"
         position="0.88 0.85 -0.75"
         stackable=""
         item-type="patty"
@@ -211,7 +201,7 @@
       <a-entity
         id="cheese"
         class="interactable"
-        gltf-model="./public/assets/cheese.glb"
+        gltf-model="#model-cheese"
         position="1.29456 0.85 -0.29922"
         stackable=""
         item-type="cheese"
@@ -225,7 +215,7 @@
       <a-entity
         id="tomato"
         class="interactable"
-        gltf-model="./public/assets/tomato.glb"
+        gltf-model="#model-tomato"
         position="1.16678 0.85 -0.5527"
         scale="0.15 0.15 0.15"
         stackable=""
@@ -239,7 +229,7 @@
       <a-entity
         id="onion"
         class="interactable"
-        gltf-model="./public/assets/onion.glb"
+        gltf-model="#model-onion"
         position="1.23 0.85 -0.85799"
         scale="0.25 0.25 0.25"
         stackable=""
@@ -277,7 +267,7 @@
 
       <a-entity
         class="interactable"
-        gltf-model="./public/assets/spatula.glb"
+        gltf-model="#model-spatula"
         id="spatula"
         position="-0.42 0.95 -0.92"
         scale="0.4 0.4 0.4"
@@ -304,7 +294,6 @@
             grab-controller=""
           ></a-entity>
         </a-camera>
-
         <a-entity
           id="leftHand"
           oculus-touch-controls="hand: left; model: false"
@@ -313,7 +302,6 @@
           rayclick-on-buttons
         >
           <a-entity
-            id="leftHandModel"
             gltf-model="#hand-model"
             scale="0.003 0.003 -0.003"
             rotation="230 -100 35"
@@ -338,7 +326,6 @@
           rayclick-on-buttons
         >
           <a-entity
-            id="rightHandModel"
             gltf-model="#hand-model"
             scale="0.003 0.003 0.003"
             rotation="-230 -100 35"
@@ -356,44 +343,11 @@
           ></a-box>
         </a-entity>
       </a-entity>
+
+      <a-entity score-manager=""></a-entity>
+      <a-entity order-manager="interval: 18000; maxOrders: 2"></a-entity>
+
+      <div class="a-loader-title" style="display: none">XR Burger Workshop</div>
     </a-scene>
-    <script>
-      const menu = document.getElementById("menu");
-      const sceneEl = document.querySelector("a-scene");
-      const btn = document.getElementById("btn-ar");
-
-      btn.disabled = true;
-      btn.textContent = "Loading...";
-
-      let sceneReady = false;
-
-      sceneEl.addEventListener("loaded", () => {
-        sceneReady = true;
-        btn.disabled = false;
-        btn.textContent = "Start AR";
-      });
-
-      btn.addEventListener("click", () => {
-        if (!sceneReady) return;
-        if (typeof sceneEl.enterAR !== "function") return;
-
-        const result = sceneEl.enterAR();
-        if (result && typeof result.catch === "function") {
-          result.catch(() => {
-            menu.style.display = "";
-          });
-        }
-      });
-
-      sceneEl.addEventListener("enter-vr", () => {
-        if (sceneEl.is("ar-mode")) {
-          menu.style.display = "none";
-        }
-      });
-
-      sceneEl.addEventListener("exit-vr", () => {
-        menu.style.display = "";
-      });
-    </script>
   </body>
 </html>
