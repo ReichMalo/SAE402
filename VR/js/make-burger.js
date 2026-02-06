@@ -216,6 +216,11 @@ AFRAME.registerComponent("plate-target", {
       if (!this._readyShown) {
         window.XRDebug?.log?.("BURGER IS READY:", v.current);
         this._readyShown = true;
+        
+        // Auto-submit the burger after a brief delay to ensure stability
+        setTimeout(() => {
+          this.submitBurger();
+        }, 500);
       }
     } else {
       this._readyToSubmit = false;
@@ -400,6 +405,79 @@ AFRAME.registerComponent("plate-target", {
     this._readyShown = false;
 
     window.XRDebug?.set?.("Plate zone: empty");
+  },
+
+  submitBurger: function () {
+    if (!this._readyToSubmit) {
+      window.XRDebug?.log?.("Burger not ready yet!");
+      return;
+    }
+
+    // Mapper les IDs aux noms du système
+    const idToName = {
+      "bunBottom": "bun_bottom",
+      "bunTop": "bun_top",
+      "patty": "patty",
+      "cheese": "cheese",
+      "tomato": "tomato",
+      "onion": "onion"
+    };
+
+    // Récupérer la validation actualisée
+    const validation = this.validateBurgerNow();
+    if (!validation.ok) {
+      window.XRDebug?.log?.("Invalid burger order!");
+      return;
+    }
+
+    // Convertir les IDs actuels en noms du système
+    const playerIngredients = validation.current.map(rawId => {
+      const name = idToName[rawId];
+      if (!name) {
+        console.warn("Unknown ingredient ID:", rawId);
+        return rawId.toLowerCase();
+      }
+      return name;
+    });
+
+    console.log("Player burger:", playerIngredients);
+
+    // Chercher une TV avec recipe-display
+    const activeOrders = document.querySelectorAll('.active-order');
+    let matched = false;
+
+    for (const tvEl of activeOrders) {
+      const recipeDisplay = tvEl.components && tvEl.components['recipe-display'];
+      if (!recipeDisplay) continue;
+
+      const targetRecipe = recipeDisplay.getRecipe();
+      const targetIngredients = targetRecipe.map(item => item.type);
+
+      console.log("Target recipe:", targetIngredients);
+
+      // Utiliser la fonction unifiée de comparaison
+      if (window.ScoreManager) {
+        const comparison = window.ScoreManager.compareRecipes(playerIngredients, targetIngredients);
+        
+        if (comparison.matched) {
+          window.XRDebug?.log?.("✓ BURGER MATCHES RECIPE PERFECTLY!");
+          
+          // Valider et calculer les points
+          window.ScoreManager.validateOrder(playerIngredients, tvEl);
+          
+          // Consommer le burger
+          this.consumeBurger();
+          matched = true;
+          break;
+        } else {
+          window.XRDebug?.log?.(`❌ Recipe mismatch: ${comparison.reason}`);
+        }
+      }
+    }
+
+    if (!matched) {
+      window.XRDebug?.log?.("❌ No matching recipe found");
+    }
   },
 
   remove: function () {

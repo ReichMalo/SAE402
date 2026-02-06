@@ -106,11 +106,12 @@ AFRAME.registerComponent('score-manager', {
 
     validateOrder: function(playerIngredients, orderEntity) {
         const recipeDisplay = orderEntity.components['recipe-display'];
-        if (!recipeDisplay) return;
+        if (!recipeDisplay) return { matched: false, score: 0 };
 
         const targetRecipe = recipeDisplay.getRecipe();
         const targetIngredients = targetRecipe.map(item => item.type);
 
+        // Comparaison de la recette
         let score = 0;
         let isPerfect = true;
         let maxLength = Math.max(playerIngredients.length, targetIngredients.length);
@@ -139,5 +140,25 @@ AFRAME.registerComponent('score-manager', {
 
         // Feedback local sur la TV
         recipeDisplay.showResult(score, isPerfect);
+
+        return { 
+            matched: isPerfect, 
+            score: score, 
+            targetIngredients: targetIngredients 
+        };
+    },
+
+    compareRecipes: function(playerIngredients, targetIngredients) {
+        if (playerIngredients.length !== targetIngredients.length) {
+            return { matched: false, reason: "wrong_length" };
+        }
+
+        for (let i = 0; i < playerIngredients.length; i++) {
+            if (playerIngredients[i] !== targetIngredients[i]) {
+                return { matched: false, reason: "wrong_order", position: i };
+            }
+        }
+
+        return { matched: true, reason: "perfect_match" };
     }
 });
