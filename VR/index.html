@@ -317,6 +317,47 @@
         physx-body="type: dynamic; mass: 0.15"
       ></a-entity>
 
+      <a-entity
+        class="interactable"
+        id="fork"
+        position="-0.65 0.95 -0.92"
+        rotation="0 270 0"
+        stackable=""
+        item-type="fork"
+        physx-body="type: dynamic; mass: 0.12"
+      >
+        <!-- Fork handle -->
+        <a-box
+          position="0 0 0"
+          width="0.02"
+          height="0.02"
+          depth="0.15"
+          color="#888888"
+        ></a-box>
+        <!-- Fork tines (prongs) -->
+        <a-box
+          position="0 0 0.08"
+          width="0.015"
+          height="0.015"
+          depth="0.05"
+          color="#888888"
+        ></a-box>
+        <a-box
+          position="-0.015 0 0.08"
+          width="0.015"
+          height="0.015"
+          depth="0.05"
+          color="#888888"
+        ></a-box>
+        <a-box
+          position="0.015 0 0.08"
+          width="0.015"
+          height="0.015"
+          depth="0.05"
+          color="#888888"
+        ></a-box>
+      </a-entity>
+
       <a-entity id="cameraRig">
         <a-camera
           id="camera"
