@@ -1,77 +1,117 @@
 <!doctype html>
-    <!-- KEY FEATURES section removed -->
-        </div>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Burger Rush XR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Luckiest+Guy&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+    <section class="hero relative overflow-hidden flex-center">
+      <div class="hero-bg-pattern">
+        <div class="blob blob-yellow"></div>
+        <div class="blob blob-red"></div>
+        <div class="blob blob-orange"></div>
+      </div>
 
-        <div class="features-grid">
-          <div class="feature-card hover-scale feature-muted">
-            <div class="feature-icon" style="background-color: #ff3333">
-              <i data-lucide="timer" class="text-white"></i>
-            </div>
-            <h3 class="feature-title" style="color: #ff3333">
-              Time Management
-            </h3>
-            <p class="feature-desc">
-              Serve customers before the timer runs out. Each order has a
-              decreasing timer!
-            </p>
-          </div>
-          <div class="feature-card hover-scale">
-            <div class="feature-icon" style="background-color: #ff6b35">
-              <i data-lucide="list-ordered" class="text-white"></i>
-            </div>
-            <h3 class="feature-title" style="color: #ff6b35">Varied Recipes</h3>
-            <p class="feature-desc">
-              5 burger types with ingredients to assemble in the correct order:
-              Classic, Cheese Deluxe, Veggie, Bacon, Monster.
-            </p>
-          </div>
-          <div class="feature-card hover-scale feature-muted">
-            <div class="feature-icon" style="background-color: #ffc107">
-              <i data-lucide="target" class="text-white"></i>
-            </div>
-            <h3 class="feature-title" style="color: #ffc107">
-              Precision Required
-            </h3>
-            <p class="feature-desc">
-              Ingredients must be placed in the exact recipe order to validate
-              the order.
-            </p>
-          </div>
-          <div class="feature-card hover-scale">
-            <div class="feature-icon" style="background-color: #4caf50">
-              <i data-lucide="trophy" class="text-white"></i>
-            </div>
-            <h3 class="feature-title" style="color: #4caf50">Scoring System</h3>
-            <p class="feature-desc">
-              Earn points based on difficulty: 70–150 points per burger. Complex
-              recipes reward more!
-            </p>
-          </div>
-          <div class="feature-card hover-scale">
-            <div class="feature-icon" style="background-color: #ff9800">
-              <i data-lucide="zap" class="text-white"></i>
-            </div>
-            <h3 class="feature-title" style="color: #ff9800">
-              Fast-Paced Gameplay
-            </h3>
-            <p class="feature-desc">
-              A fast tempo that demands speed and focus. Chain orders to
-              maximize your score.
-            </p>
-          </div>
-          <div class="feature-card hover-scale feature-muted">
-            <div class="feature-icon" style="background-color: #9c27b0">
-              <i data-lucide="users" class="text-white"></i>
-            </div>
-            <h3 class="feature-title" style="color: #9c27b0">XR Immersion</h3>
-            <p class="feature-desc">
-              Play in mixed reality with WebXR. Place your virtual restaurant in
-              your real space!
-            </p>
+      <div class="container text-center relative z-10 py-20">
+        <div class="flex-center mb-8">
+          <div class="icon-wrapper border-red">
+            <i data-lucide="chef-hat" class="icon-large text-red"></i>
           </div>
         </div>
 
-        <!-- Game Rules section removed -->
+        <h1 class="title-main drop-shadow">BURGER RUSH XR</h1>
+        <p class="subtitle drop-shadow-sm text-light">
+          Cook burgers in mixed reality!
+        </p>
+
+        <p class="desc text-white opacity-90 mx-auto">
+          An immersive cooking game built with <strong>A-Frame</strong>,
+          <strong>Three.js</strong>, and <strong>WebXR</strong>. Prepare burgers
+          following customer orders, manage your time, and become the ultimate
+          chef!
+        </p>
+
+        <div class="tech-stack flex-center flex-wrap gap-4 mb-12">
+          <span class="tech-badge">A-Frame</span>
+          <span class="tech-badge">Three.js</span>
+          <span class="tech-badge">JavaScript</span>
+          <span class="tech-badge">WebXR</span>
+          <span class="tech-badge">HTML/CSS</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="demo py-20">
+      <div class="container">
+        <div class="text-center mb-12">
+          <h2 class="title-section text-white drop-shadow">GAME DEMO</h2>
+          <p class="subtitle text-light">See Burger Rush XR in action!</p>
+        </div>
+
+        <div class="video-card">
+          <div class="video-container">
+            <div class="video-embed" id="videoEmbed">
+              <button
+                class="fullscreen-btn"
+                id="btnFullscreen"
+                aria-label="Plein écran"
+              >
+                <i data-lucide="maximize-2" class="icon-sm text-white"></i>
+              </button>
+              <iframe
+                width="560"
+                height="315"
+                src="https://www.youtube.com/embed/phF_sSe-1C4?si=YFSrQzByDPsqa0X6"
+                title="YouTube video player"
+                frameborder="0"
+                allow="
+                  accelerometer;
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  gyroscope;
+                  picture-in-picture;
+                  web-share;
+                "
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-links mt-12 flex-center flex-wrap gap-4">
+          <a
+            class="btn btn-white"
+            href="https://vivien-pain.github.io/SAE402_TowerDefense/"
+            target="_blank"
+            rel="noopener"
+            >Vivien project</a
+          >
+          <a
+            class="btn btn-white"
+            href="https://alina-mishcherikova.github.io/edu.AFrame_app/"
+            target="_blank"
+            rel="noopener"
+            >Alina project</a
+          >
+          <a
+            class="btn btn-white"
+            href="https://reichmalo.github.io/SAE402-VersionMalo/"
+            target="_blank"
+            rel="noopener"
+            >Malo project</a
+          >
+        </div>
       </div>
     </section>
 

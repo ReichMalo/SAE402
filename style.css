@@ -394,12 +394,6 @@ h6 {
   transition: transform 0.3s ease;
 }
 
-/* Muted (gray) variant for some feature cards */
-.feature-card.feature-muted {
-  background-color: #f3f4f6; /* light gray */
-  border-color: #e5e7eb;
-}
-
 .hover-scale:hover {
   transform: scale(1.05);
 }
