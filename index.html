@@ -1,89 +1,364 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AR Room - Quest 3</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <title>Burger Rush XR</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Luckiest+Guy&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
-    <a-scene webxr="referenceSpaceType: local-floor;">
-      <a-box
-        position="0 1.5 -2"
-        rotation="0 45 0"
-        color="#4CC3D9"
-        scale="0.5 0.5 0.5"
-        animation="property: rotation; to: 0 405 0; loop: true; dur: 10000; easing: linear"
-      ></a-box>
+    <section class="hero relative overflow-hidden flex-center">
+      <div class="hero-bg-pattern">
+        <div class="blob blob-yellow"></div>
+        <div class="blob blob-red"></div>
+        <div class="blob blob-orange"></div>
+      </div>
 
-      <a-sphere position="-1 1.5 -2" radius="0.25" color="#EF2D5E"></a-sphere>
+      <div class="container text-center relative z-10 py-20">
+        <div class="flex-center mb-8">
+          <div class="icon-wrapper border-red">
+            <i data-lucide="chef-hat" class="icon-large text-red"></i>
+          </div>
+        </div>
 
-      <a-entity
-        camera
-        look-controls
-        wasd-controls="enabled: false"
-        position="0 1.6 0"
-      ></a-entity>
-      <a-entity
-        id="leftHand"
-        laser-controls="hand: left"
-        raycaster="objects: .clickable"
-      ></a-entity>
-      <a-entity
-        id="rightHand"
-        laser-controls="hand: right"
-        raycaster="objects: .clickable"
-      ></a-entity>
-    </a-scene>
+        <h1 class="title-main drop-shadow">BURGER RUSH XR</h1>
+        <p class="subtitle drop-shadow-sm text-light">
+          Cook burgers in mixed reality!
+        </p>
 
-    <button
-      id="ar-button"
-      style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 15px 30px;
-        font-size: 18px;
-        background: #4caf50;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        z-index: 1000;
-      "
-    >
-      AR
-    </button>
+        <p class="desc text-white opacity-90 mx-auto">
+          An immersive cooking game built with <strong>A-Frame</strong>,
+          <strong>Three.js</strong>, and <strong>WebXR</strong>. Prepare burgers
+          following customer orders, manage your time, and become the ultimate
+          chef!
+        </p>
 
-    <a
-      href="anchors-hit/index.html"
-      style="
-        background: red;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        position: fixed;
-        bottom: 60px;
-        right: 20px;
-        z-index: 1000;
-      "
-    >
-      NEW TRY
-    </a>
+        <div class="tech-stack flex-center flex-wrap gap-4 mb-12">
+          <span class="tech-badge">A-Frame</span>
+          <span class="tech-badge">Three.js</span>
+          <span class="tech-badge">JavaScript</span>
+          <span class="tech-badge">WebXR</span>
+          <span class="tech-badge">HTML/CSS</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="demo py-20">
+      <div class="container">
+        <div class="text-center mb-12">
+          <h2 class="title-section text-white drop-shadow">GAME DEMO</h2>
+          <p class="subtitle text-light">See Burger Rush XR in action!</p>
+        </div>
+
+        <div class="video-card">
+          <div class="video-container">
+            <div class="video-embed" id="videoEmbed">
+              <button
+                class="fullscreen-btn"
+                id="btnFullscreen"
+                aria-label="Plein écran"
+              >
+                <i data-lucide="maximize-2" class="icon-sm text-white"></i>
+              </button>
+              <iframe
+                width="560"
+                height="315"
+                src="https://www.youtube.com/embed/phF_sSe-1C4?si=YFSrQzByDPsqa0X6"
+                title="YouTube video player"
+                frameborder="0"
+                allow="
+                  accelerometer;
+                  autoplay;
+                  clipboard-write;
+                  encrypted-media;
+                  gyroscope;
+                  picture-in-picture;
+                  web-share;
+                "
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+        </div>
+
+        <div class="project-links mt-12 flex-center flex-wrap gap-4">
+          <a
+            class="btn btn-white"
+            href="https://vivien-pain.github.io/SAE402_TowerDefense/"
+            target="_blank"
+            rel="noopener"
+            >Vivien project</a
+          >
+          <a
+            class="btn btn-white"
+            href="https://alina-mishcherikova.github.io/edu.AFrame_app/"
+            target="_blank"
+            rel="noopener"
+            >Alina project</a
+          >
+          <a
+            class="btn btn-white"
+            href="https://reichmalo.github.io/SAE402-VersionMalo/"
+            target="_blank"
+            rel="noopener"
+            >Malo project</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section class="features py-20">
+      <div class="container">
+        <div class="text-center mb-16">
+          <h2 class="title-section text-white drop-shadow">KEY FEATURES</h2>
+          <p class="subtitle text-light mx-auto">
+            Simple yet addictive gameplay with proven mechanics
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card hover-scale">
+            <div class="feature-icon" style="background-color: #ff3333">
+              <i data-lucide="timer" class="text-white"></i>
+            </div>
+            <h3 class="feature-title" style="color: #ff3333">
+              Time Management
+            </h3>
+            <p class="feature-desc">
+              Serve customers before the timer runs out. Each order has a
+              decreasing timer!
+            </p>
+          </div>
+          <div class="feature-card hover-scale">
+            <div class="feature-icon" style="background-color: #ff6b35">
+              <i data-lucide="list-ordered" class="text-white"></i>
+            </div>
+            <h3 class="feature-title" style="color: #ff6b35">Varied Recipes</h3>
+            <p class="feature-desc">
+              5 burger types with ingredients to assemble in the correct order:
+              Classic, Cheese Deluxe, Veggie, Bacon, Monster.
+            </p>
+          </div>
+          <div class="feature-card hover-scale">
+            <div class="feature-icon" style="background-color: #ffc107">
+              <i data-lucide="target" class="text-white"></i>
+            </div>
+            <h3 class="feature-title" style="color: #ffc107">
+              Precision Required
+            </h3>
+            <p class="feature-desc">
+              Ingredients must be placed in the exact recipe order to validate
+              the order.
+            </p>
+          </div>
+          <div class="feature-card hover-scale">
+            <div class="feature-icon" style="background-color: #4caf50">
+              <i data-lucide="trophy" class="text-white"></i>
+            </div>
+            <h3 class="feature-title" style="color: #4caf50">Scoring System</h3>
+            <p class="feature-desc">
+              Earn points based on difficulty: 70–150 points per burger. Complex
+              recipes reward more!
+            </p>
+          </div>
+          <div class="feature-card hover-scale">
+            <div class="feature-icon" style="background-color: #ff9800">
+              <i data-lucide="zap" class="text-white"></i>
+            </div>
+            <h3 class="feature-title" style="color: #ff9800">
+              Fast-Paced Gameplay
+            </h3>
+            <p class="feature-desc">
+              A fast tempo that demands speed and focus. Chain orders to
+              maximize your score.
+            </p>
+          </div>
+          <div class="feature-card hover-scale">
+            <div class="feature-icon" style="background-color: #9c27b0">
+              <i data-lucide="users" class="text-white"></i>
+            </div>
+            <h3 class="feature-title" style="color: #9c27b0">XR Immersion</h3>
+            <p class="feature-desc">
+              Play in mixed reality with WebXR. Place your virtual restaurant in
+              your real space!
+            </p>
+          </div>
+        </div>
+
+        <!-- Game Rules section removed -->
+      </div>
+    </section>
+
+    <section class="code-section py-20">
+      <div class="container">
+        <div class="text-center mb-16">
+          <h2 class="title-section text-white drop-shadow">
+            TECHNICAL DETAILS
+          </h2>
+          <p class="subtitle text-light mx-auto">
+            Code examples illustrating the game's key features
+          </p>
+        </div>
+
+        <div class="code-grid items-start mb-12">
+          <div class="text-content">
+            <h3 class="text-white text-3xl font-bold mb-4">Ingredient Data</h3>
+            <p class="text-white opacity-90 leading-relaxed">
+              Data structure to manage the 9 available ingredients. Each
+              ingredient has a 3D model, a scale, a Y offset and visual
+              properties for the UI.
+            </p>
+          </div>
+          <div class="code-block border-red">
+            <pre><code>const INGREDIENT_DATA = {
+  'bottom-bun': {
+    model: '#model-bottom-bun',
+    scale: '0.2 0.2 0.2',
+    offsetY: 0,
+    emoji: '🍞'
+  },
+  'patty': {
+    model: '#model-patty',
+    scale: '0.18 0.18 0.18',
+    offsetY: 0.05,
+    emoji: '🥩'
+  },
+  'cheese': {
+    model: '#model-cheese',
+    offsetY: 0.02,
+    emoji: '🧀'
+  }
+  // ... 6 autres ingrédients
+};</code></pre>
+          </div>
+        </div>
+
+        <div class="code-grid code-grid-reverse items-start mb-12">
+          <div class="code-block border-red">
+            <pre><code>let interactables = this.el.sceneEl.querySelectorAll(".interactable");
+
+    for (let i = 0; i < interactables.length; i++) {
+      let ent = interactables[i];
+
+      // don't compare with self plate
+      if (ent === this.el) continue;
+      // Check if the entity's bounding box intersects 
+      //with the plate's zone box
+      this._tempBox.setFromObject(ent.object3D);
+      if (!this._zoneBox.intersectsBox(this._tempBox)) continue;
+      // Try to determine the ingredient type using id or 
+      // item-type attribute
+      let rawId = ent.getAttribute("id");
+      let label;
+      // take id
+      if (rawId) {
+        label = rawId;
+      }
+      if (this._expectedMap[label]) {
+        ent.dataset.plateLabel = label;
+        ent.object3D.getWorldPosition(this._tempPos);
+        let dist = this._tempPos.distanceTo(this._zoneCenter);
+        if (!closestByType[label] || dist < closestByType[label].dist) {
+          closestByType[label] = { el: ent, dist: dist };
+        }
+      }
+    }</code></pre>
+          </div>
+          <div class="text-content">
+            <h3 class="text-white text-3xl font-bold mb-4">
+              Ingredient zone scanner
+            </h3>
+            <p class="text-white opacity-90 leading-relaxed">
+              Scans all entities in the scene and determines which ones are
+              physically located inside the plate's detection zone.
+            </p>
+          </div>
+        </div>
+
+        <div class="code-grid items-start">
+          <div class="text-content">
+            <h3 class="text-white text-3xl font-bold mb-4">
+              Random Recipe Generation
+            </h3>
+            <p class="text-white opacity-90 leading-relaxed">
+              A function that creates random burger recipes with 1-2 patties,
+              optional cheese/tomato/onion, and ensures at least 2 ingredients
+              for a valid order.
+            </p>
+          </div>
+          <div class="code-block border-red">
+            <pre><code>function generateRandomRecipe() {
+    const innerIngredients = [];
+    const steakCount = Math.floor(Math.random() * 2) + 1;
+    for (let i = 0; i < steakCount; i++) {
+        innerIngredients.push({ type: 'patty' });
+        if (Math.random() > 0.5) innerIngredients.push({ type: 'cheese' });
+    }
+    if (Math.random() > 0.6) innerIngredients.push({ type: 'tomato' });
+    if (Math.random() > 0.6) innerIngredients.push({ type: 'onion' });
+
+    while (innerIngredients.length < 2) {
+        const fillers = ['cheese', 'tomato', 'onion'];
+        const randomFiller = fillers[Math.floor(Math.random() * fillers.length)];
+        innerIngredients.push({ type: randomFiller });
+    }
+
+    const recipe = [];
+    recipe.push({ type: 'bun_bottom' });
+    innerIngredients.forEach(item => recipe.push(item));
+    recipe.push({ type: 'bun_top' });
+
+    return recipe;
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer py-16 text-center">
+      <div class="container relative z-10">
+        <h3 class="title-main text-white mb-6">BURGER RUSH XR</h3>
+        <p class="text-light text-xl max-w-2xl mx-auto mb-8">
+          An innovative XR game where you assemble burgers in mixed reality.
+          Experience virtual cooking and beat your records!
+        </p>
+
+        <div class="flex-center flex-wrap gap-4 mb-8">
+          <a href="#" class="btn btn-white">View on GitHub</a>
+          <a href="#demo" class="btn btn-yellow">View Demo</a>
+        </div>
+
+        <div class="copyright border-top pt-8 mt-8">
+          <p class="text-white opacity-80">
+            © 2026 Burger Rush XR. Tous droits réservés.
+          </p>
+        </div>
+      </div>
+    </footer>
 
     <script>
-      const arButton = document.getElementById("ar-button");
-      const sceneEl = document.querySelector("a-scene");
+      lucide.createIcons();
 
-      arButton.addEventListener("click", async () => {
-        if (!navigator.xr) return;
-
-        const session = await navigator.xr.requestSession("immersive-ar", {
-          requiredFeatures: ["local-floor"],
-          optionalFeatures: ["hand-tracking", "hit-test"],
+      // Fullscreen button for the video embed
+      (function () {
+        const btn = document.getElementById("btnFullscreen");
+        const target = document.getElementById("videoEmbed");
+        if (!btn || !target) return;
+        btn.addEventListener("click", () => {
+          if (target.requestFullscreen) return target.requestFullscreen();
+          if (target.webkitRequestFullscreen)
+            return target.webkitRequestFullscreen();
+          if (target.msRequestFullscreen) return target.msRequestFullscreen();
         });
-
-        sceneEl.renderer.xr.setSession(session);
-      });
+      })();
     </script>
   </body>
 </html>
